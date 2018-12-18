@@ -37,4 +37,4 @@ For better reference, all materials below would be written in Chinese.
 
 ## 其他注意事项
 
-在使用ATSAST源码后，请将项目协议转为AGPL。
+因项目为ATSAST源码一部分，项目协议转为AGPL。
