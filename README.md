@@ -25,6 +25,11 @@ For better reference, all materials below would be written in Chinese.
 1. 同名处理等；
 1. 一般网盘的其他基础功能。
 
+## 额外要求
+
++ 开发过程中，开发团队应该完成开发日志；
++ 编写项目文档（介绍各个功能）与接口文档（如果有）。
+
 ## 推荐
 
 后端框架：`FlashPHP`
