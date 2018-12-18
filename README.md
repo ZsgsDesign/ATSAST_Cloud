@@ -27,10 +27,13 @@ For better reference, all materials below would be written in Chinese.
 
 ## 推荐
 
-后端框架：FlashPHP
-前端库：Bootstrap Material Design
-数据库：MySQL
-基本语言：PHP、JS、CSS
+后端框架：`FlashPHP`
+
+前端库：`Bootstrap Material Design`
+
+数据库：`MySQL`
+
+基本语言：`PHP`、`JS`、`CSS`
 
 ## 其他注意事项
 
