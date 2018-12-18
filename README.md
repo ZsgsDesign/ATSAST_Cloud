@@ -7,7 +7,7 @@ For better reference, all materials below would be written in Chinese.
 
 # ATSAST网盘系统
 
-这是ATSAST网盘系统的独立源代码的一部分，本系统代码将会被整合于ATSAST，但将作为单独部分开源并可独立使用。
+这是ATSAST网盘系统的独立源代码，为ATSAST源代码的一部分，本系统代码将会被整合于ATSAST，但将作为单独部分开源并可独立使用。
 
 ## 基本功能
 
