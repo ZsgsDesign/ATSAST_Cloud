@@ -22,13 +22,11 @@ function getIP()
 
 function is_login() {
     $login = true;
-    if (empty($_SESSION['OPENID'])) $login = false;
-    else {
-        $user = new Model('users');
-        $result = $user->find(['OPENID=:OPENID', ':OPENID'=>$_SESSION['OPENID']]);
-        if ($result) $_SESSION['uid'] = $result['uid'];
-        else $login = false;
-    }
+    if (empty($_SESSION['OPENID'])) return false;
+    $user = new Model('users');
+    $result = $user->find(['OPENID=:OPENID', ':OPENID'=>$_SESSION['OPENID']]);
+    if ($result) $_SESSION['uid'] = $result['uid'];
+    else $login = false;
     if (!$login) {
         session_unset();
         session_destroy();

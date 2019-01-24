@@ -4,6 +4,11 @@ date_default_timezone_set('PRC');
 
 $config = array(
     'rewrite' => array(
+        'account/register'                                   => 'account/index',
+        'account/login'                                      => 'account/index',
+        'account/<a>'                                        => 'account/<a>',
+        'account/'                                           => 'account/index',
+        'cloud/'                                             => 'cloud/index',
         '<a>'                                                => 'main/<a>',
         '/'                                                  => 'main/index',
     ),

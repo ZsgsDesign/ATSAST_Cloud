@@ -3,7 +3,10 @@ class MainController extends BaseController
 {
     public function actionIndex()
     {
-        $this->name="FlashPHP";
-        $this->title="FlashPHP";
+        if ($this->islogin) {
+            $this->jump("{$this->ATSAST_DOMAIN}/cloud/");
+        } else {
+            $this->jump("{$this->ATSAST_DOMAIN}/account/");
+        }
     }
 }
