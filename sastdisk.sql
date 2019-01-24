@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `disk_file` (
   `path` varchar(255) NOT NULL,
   `filename` varchar(255) NOT NULL,
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `hash` char(28) NOT NULL,
+  `hash` char(40) NOT NULL,
   `is_dir` tinyint(1) NOT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `filesize` int(11) NOT NULL,
