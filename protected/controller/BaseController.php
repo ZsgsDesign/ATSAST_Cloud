@@ -1,5 +1,7 @@
 <?php
 
+require_once(APP_DIR.'/protected/model/CONFIG.php');
+
 class BaseController extends Controller
 {
     public $layout = "layout.html";
@@ -14,9 +16,9 @@ class BaseController extends Controller
         require(APP_DIR.'/protected/include/functions.php');
 
         $this->islogin=is_login();
-        $this->ATSAST_DOMAIN='';
-        $this->ATSAST_CDN='https://static.1cf.co';
-        $this->ATSAST_SALT='@SAST+1s';
+        $this->ATSAST_DOMAIN=CONFIG::GET('ATSAST_DOMAIN');
+        $this->ATSAST_CDN=CONFIG::GET('ATSAST_CDN');
+        $this->ATSAST_SALT=CONFIG::GET('ATSAST_SALT');
     }
 
     public function jump($url, $delay = 0)

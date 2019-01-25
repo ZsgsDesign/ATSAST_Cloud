@@ -1,6 +1,7 @@
 <?php
 
 date_default_timezone_set('PRC');
+require_once(APP_DIR.'/protected/model/CONFIG.php');
 
 $config = array(
     'rewrite' => array(
@@ -8,6 +9,7 @@ $config = array(
         'account/login'                                      => 'account/index',
         'account/<a>'                                        => 'account/<a>',
         'account/'                                           => 'account/index',
+        'cloud/<a>'                                          => 'cloud/<a>',
         'cloud/'                                             => 'cloud/index',
         '<a>'                                                => 'main/<a>',
         '/'                                                  => 'main/index',
@@ -19,11 +21,11 @@ $domain = array(
         'debug' => 0,
         'maintain' => 0,
         'mysql' => array(
-            'MYSQL_HOST' => "localhost",
-            'MYSQL_PORT' => "3306",
-            'MYSQL_USER' => "root",
-            'MYSQL_DB'   => "sastdisk",
-            'MYSQL_PASS' => "root",
+            'MYSQL_HOST' => CONFIG::GET('ATSAST_MYSQL_HOST'),
+            'MYSQL_PORT' => CONFIG::GET('ATSAST_MYSQL_PORT'),
+            'MYSQL_USER' => CONFIG::GET('ATSAST_MYSQL_USER'),
+            'MYSQL_DB'   => CONFIG::GET('ATSAST_MYSQL_DATABASE'),
+            'MYSQL_PASS' => CONFIG::GET('ATSAST_MYSQL_PASSWORD'),
             'MYSQL_CHARSET' => 'utf8',
         ),
     ),
@@ -31,11 +33,11 @@ $domain = array(
         'debug' => 1,
         'maintain' => 0,
         'mysql' => array(
-            'MYSQL_HOST' => "localhost",
-            'MYSQL_PORT' => "3306",
-            'MYSQL_USER' => "root",
-            'MYSQL_DB'   => "sastdisk",
-            'MYSQL_PASS' => "root",
+            'MYSQL_HOST' => CONFIG::GET('ATSAST_MYSQL_HOST'),
+            'MYSQL_PORT' => CONFIG::GET('ATSAST_MYSQL_PORT'),
+            'MYSQL_USER' => CONFIG::GET('ATSAST_MYSQL_USER'),
+            'MYSQL_DB'   => CONFIG::GET('ATSAST_MYSQL_DATABASE'),
+            'MYSQL_PASS' => CONFIG::GET('ATSAST_MYSQL_PASSWORD'),
             'MYSQL_CHARSET' => 'utf8',
         ),
     ),

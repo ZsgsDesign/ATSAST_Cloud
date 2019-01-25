@@ -9,6 +9,39 @@ For better reference, all materials below would be written in Chinese.
 
 这是ATSAST网盘系统的独立源代码，为ATSAST源代码的一部分，本系统代码将会被整合于ATSAST，但将作为单独部分开源并可独立使用。
 
+## 安装
+
+新建数据库，并导入项目根目录下的sastdisk.sql
+
+新建/protected/model/CONFIG.php，插入内容如下
+
+```php
+<?php
+
+class CONFIG {
+
+	public static function GET($KEY)
+	{
+		$config=array(
+			"ATSAST_MYSQL_HOST"=>"localhost",
+			"ATSAST_MYSQL_PORT"=>"3306",
+			"ATSAST_MYSQL_USER"=>"root",
+			"ATSAST_MYSQL_DATABASE"=>"sastdisk",
+			"ATSAST_MYSQL_PASSWORD"=>"root",
+
+			"ATSAST_CDN"=>"https://static.1cf.co",
+			"ATSAST_SALT"=>"@SAST+1s",
+			"ATSAST_DOMAIN"=>"",
+
+			"CLOUD_FILE_DIRECTORY"=>"/home/cloud_objs"
+		);
+		return $config[$KEY];
+	}
+	
+
+}
+```
+
 ## 部署地址
 https://disk.winter.mundb.xyz
 
