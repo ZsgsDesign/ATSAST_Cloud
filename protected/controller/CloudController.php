@@ -74,6 +74,66 @@ class CloudController extends BaseController
                
     }
 
+    //删除文件及文件夹
+    public function actionDelete()
+    {
+        if (!$this->islogin) ERR::Catcher(2001);
+        if (!arg('path')) ERR::Catcher(1003);
+        if(!is_path_legal(arg('path'))) ERR::Catcher(1004);
+        if(!is_path_existed(arg('path'))) ERR::Catcher(6002);
+        $name=getName(arg('path'));
+        $filename=$name[0];
+        $path=$name[1];
+        //判断
+        $db=new Model('disk_file');
+        $condition=array('uid'=>$_SESSION['uid'],'deleted'=>0, 'path'=>$path,'filename'=>$filename);
+        $result=$db->find($condition);
+        if(empty($result))ERR::Catcher(6001);
+        //文件
+        if($result['is_dir']==0)
+        {
+            $sumsize=$result['filesize'];
+            $db->update($condition,array('deleted'=>1));
+            //改变空间大小
+            $users = new Model('users');
+            $condition=array('uid'=>$_SESSION['uid']);
+            $result=$db->find($condition);
+            $used=$result['used']+$sumsize;
+            $newrow = array("used" => $used);
+            $db->update($condition,$newrow);
+            SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
+        }
+        //文件夹
+        if($result['is_dir']==1)
+        {
+        //改变空间大小
+        $db=new Model("disk_file");
+        $condition=array('path like :word',':word'=>arg('path').'%','uid'=>$_SESSION['uid'],'deleted'=>0);
+        $result=$db->findAll($condition);
+        if(empty($result))ERR::Catcher(6001);
+        $sumsize=0;
+        for($i=0;count($result,0);$i++){
+            $sumsize=$sumsize+$result[$i]['filesize'];
+        }
+        //删除文件
+        $db=new Model("disk_file");
+        $condition=array('path'=>arg('path'),'filename'=>$filename,'uid'=>$_SESSION['uid']);
+        $result=$db->update($condition,array('deleted'=>1));
+        if($result==0)ERR::Catcher(1002);
+        $condition=array('path'=>$path,'filename'=>$filename,'uid'=>$_SESSION['uid']);
+        $result=$db->update($condition,array('deleted'=>1));
+        if($result==0)ERR::Catcher(1002);
+        //更新剩余空间
+        $users = new Model('users');
+        $condition=array('uid'=>$_SESSION['uid']);
+        $result=$db->find($condition);
+        $used=$result['used']+$sumsize;
+        $newrow = array("used" => $used);
+        $db->update($condition,$newrow);
+        SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
+        }
+    }
+
 
     
 
