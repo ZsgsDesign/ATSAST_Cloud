@@ -49,6 +49,31 @@ class CloudController extends BaseController
         SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir,path from disk_file where uid=:uid,deleted=0',':uid'=>$_SESSION['uid']));   
     }
 
+    //查看文件内容
+    public function actionPreview()
+    {
+        if (!$this->islogin) ERR::Catcher(2001);
+        if (!arg('path')) ERR::Catcher(1003);
+        if(!is_path_legal(arg('path'))) ERR::Catcher(1004);
+        if(!is_path_existed(arg('path'))) ERR::Catcher(6002);
+        $name=getName(arg('path'));
+        $filename=$name[0];
+        $path=$name[1];
+        $extension=strrchr($filename, '.');
+        $condition=array('uid'=>$_SESSION['uid'],'deleted'=>0, 'path'=>$path,'filename'=>$filename);
+        $result=$db->find($condition);
+        if(empty($result))ERR::Catcher(6001);
+        $hash=$result['hash']; 
+        $dir=CONFIG::GET('CLOUD_FILE_DIRECTORY').DS.substr($hash, 0, 2).DS.substr($hash, 2);
+        $mime=array('.txt'=>'text/plain','.jpg'=>'image/jpeg','.pdf'=>'application/pdf','.bmp'=>'image/x-windows-bmp','.png'=>'image/png');
+        if(!array_key_exists($extension,$mime))ERROR::Catcher(1005);
+        header('Content-Type:'.$mime[$extension]);
+        header("filename:".$filename);
+        readfile($dir);
+        exit;
+               
+    }
+
 
     
 
