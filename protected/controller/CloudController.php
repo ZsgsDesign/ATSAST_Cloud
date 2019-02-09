@@ -35,6 +35,19 @@ class CloudController extends BaseController
         $db=new Model("disk_file");
         SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir from disk_file where uid=:uid,path=:path,deleted=0',':uid'=>$_SESSION['uid'],':path'=>$path));
     }
+    
+    //回收站
+    public function actionRecycle()
+    {
+        if (!$this->islogin) ERR::Catcher(2001);
+        if (!arg('path')) ERR::Catcher(1003);
+        if(!is_path_legal(arg('path'))) ERR::Catcher(1004);
+        if(!is_path_existed(arg('path'))) ERR::Catcher(6002);
+        $name=getName(arg('path'));
+        $path=$name[1];
+        $db=new Model("disk_file");
+        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir,path from disk_file where uid=:uid,deleted=0',':uid'=>$_SESSION['uid']));   
+    }
 
 
     
