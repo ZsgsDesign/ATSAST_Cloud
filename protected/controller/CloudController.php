@@ -33,7 +33,7 @@ class CloudController extends BaseController
         $name=getName(arg('path'));
         $path=$name[1];
         $db=new Model("disk_file");
-        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir from disk_file where uid=:uid,path=:path,deleted=0',':uid'=>$_SESSION['uid'],':path'=>$path));
+        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir from disk_file where uid=:uid,path=:path,deleted=0',[':uid'=>$_SESSION['uid'],':path'=>$path]));
     }
     
     //回收站
@@ -46,7 +46,7 @@ class CloudController extends BaseController
         $name=getName(arg('path'));
         $path=$name[1];
         $db=new Model("disk_file");
-        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir,path from disk_file where uid=:uid,deleted=0',':uid'=>$_SESSION['uid']));   
+        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir,path from disk_file where uid=:uid,deleted=0',[':uid'=>$_SESSION['uid']]));
     }
 
     //查看文件内容
@@ -171,10 +171,13 @@ class CloudController extends BaseController
     public function getName($path)
     {
         //是否以/结尾
-        if(substr_compare($path, '/', -strlen('/')) === 0)
+        if(substr_compare($path, '/', -1) === 0)
         {
             $name=array();
-            if(strcmp($path,'/')) $name[1]='/' return $name;
+            if(strcmp($path,'/')) {
+                $name[1]='/';
+                return $name;
+            }
             $path=rtrim($arr_str,'/');
             $result=explode('/',$path);
             $name[0]=$result[count($result)-1];
