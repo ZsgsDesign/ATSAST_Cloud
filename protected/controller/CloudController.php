@@ -19,7 +19,7 @@ class CloudController extends BaseController
     {
         if (!$this->islogin) ERR::Catcher(2001);
         $users = new Model('users');
-        $result = $users->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
+        $result = $users->find(['uid'=>$_SESSION['uid']]);
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
     }
 }

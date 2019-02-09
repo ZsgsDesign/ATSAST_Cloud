@@ -1,0 +1,14 @@
+<div class="navbar justify-content-end">
+    <div class="mr-5">
+        <{if $_SERVER['REQUEST_URI']=='/cloud/'}>
+            <form action="<{$ATSAST_DOMAIN}>/search" method="get" class="form-inline my-2 my-lg-0 mundb-inline">
+                <input class="form-control mr-sm-2 atsast-searchBox" name="q" type="search" placeholder="搜索" aria-label="搜索">
+            </form>
+        <{/if}>
+        <{if $islogin}>
+            <{$userinfo['name']}> &nbsp; <a href="/account/logout">注销</a>
+        <{else}>
+            <a href="/account/login">登录</a>
+        <{/if}>
+    </div>
+</div>
