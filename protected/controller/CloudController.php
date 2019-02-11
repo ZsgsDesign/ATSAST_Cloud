@@ -19,7 +19,7 @@ class CloudController extends BaseController
     {
         if (!$this->islogin) ERR::Catcher(2001);
         $users = new Model('users');
-        $result = $users->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
+        $result = $users->find(['uid'=>$_SESSION['uid']]);
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
     }
 
@@ -381,6 +381,7 @@ class CloudController extends BaseController
     private function getName($path)
     {
         //是否以/结尾
+
         if($path[-1]=='/')
         {
             $name=array();
@@ -390,6 +391,7 @@ class CloudController extends BaseController
                 $name[1]='/'; 
                 return $name;
             }
+
             $result=explode('/',$path);
             $name[0]=$result[count($result)-2];
             $name[1]=substr($path,0,strlen($path)-strlen($name[0])-1);

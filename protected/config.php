@@ -11,6 +11,8 @@ $config = array(
         'account/'                                           => 'account/index',
         'cloud/<a>'                                          => 'cloud/<a>',
         'cloud/'                                             => 'cloud/index',
+        'share/'                                             => 'share/index',
+        's/<sid>'                                            => 'share/view',
         '<a>'                                                => 'main/<a>',
         '/'                                                  => 'main/index',
     ),

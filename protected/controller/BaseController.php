@@ -16,6 +16,12 @@ class BaseController extends Controller
         require(APP_DIR.'/protected/include/functions.php');
 
         $this->islogin=is_login();
+        $users = new Model('users');
+        if ($this->islogin) {
+            $this->userinfo = $users->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
+        } else {
+            $this->userinfo = [];
+        }
         $this->ATSAST_DOMAIN=CONFIG::GET('ATSAST_DOMAIN');
         $this->ATSAST_CDN=CONFIG::GET('ATSAST_CDN');
         $this->ATSAST_SALT=CONFIG::GET('ATSAST_SALT');
