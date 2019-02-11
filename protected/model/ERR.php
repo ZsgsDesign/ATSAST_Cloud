@@ -41,6 +41,11 @@ class ERR {
             '2001' => "请先登录",
             
             '6000' => 'Cloud-Related Error',
+            '6001' => '空间不足',
+            '6002' => '路径不存在',
+            '6003' => '文件不存在',
+            '6004' => '文件重名',
+            '6005' => '文件上传失败',
         );
         return isset($ERR_DESC[$ERR_CODE])?$ERR_DESC[$ERR_CODE]:$ERR_DESC['1000'];
     }
