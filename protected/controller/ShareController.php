@@ -14,6 +14,7 @@ class ShareController extends BaseController
             $this->display('share_404.html');
         else{
             $code=arg("code");
+            $this->err = false;
             if(empty($code)){
                 $this->display('share_verify.html');
             }
