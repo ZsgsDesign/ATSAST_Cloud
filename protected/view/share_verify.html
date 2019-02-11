@@ -1,0 +1,61 @@
+<style>
+    card{
+        margin-bottom: 20vh;
+        overflow: hidden;
+        display: block;
+        box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 30px;
+        border-radius: 4px;
+        transition: .2s ease-out .0s;
+        color: #7a8e97;
+        background: #fff;
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+    avatar{
+        display: block;
+        height: 8rem;
+        weight: 8rem;
+    }
+
+    avatar > img{
+        display: block;
+        width:5rem;
+        height:5rem;
+        border-radius: 2000px;
+        box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 30px;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        top:0%;
+        left:0;
+        right:0;
+        position: absolute;
+        margin: auto;
+    }
+</style>
+<div class="container mundb-standard-container">
+    <div class="row justify-content-sm-center">
+        <card>
+            <nav>
+                <ol class="breadcrumb align-items-center p-5">
+                    <li><avatar><img src="https://avatars0.githubusercontent.com/u/1905176?s=400&v=4"></avatar></li>
+                    <li><h5>xxxx 给您加密分享了文件</h5></li>
+                </ol>
+            </nav>
+            <form class="needs-validation" method="post" novalidate>
+                <div class="card-body">
+                    <{if $err}>
+                    <div class="alert alert-warning fade show" role="alert">
+                        <p class="mb-0"><strong><i class="iconfont icon-alert-circle"></i> 请输入正确的提取码</strong></p>
+                    </div>
+                    <{/if}>
+                    <div class="form-group">
+                        <label for="code" class="bmd-label-floating">提取码</label>
+                        <input type="text" name="code" class="form-control" id="code" required>
+                    </div>
+                </div>
+                <div class="card-footer text-right">
+                    <button type="submit" class="btn btn-info">提取文件</button>
+                </div>
+            </form>
+        </card>
+    </div>
+</div>
