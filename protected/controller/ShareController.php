@@ -9,14 +9,15 @@ class ShareController extends BaseController
     public function actionView()
     {
         $this->sid = arg('sid');
+        $this->err = false;
+        $this->display('share_verify.html');
         echo $this->sid;
         if(empty($this->sid))
             $this->display('share_404.html');
         else{
             $code=arg("code");
-            $this->err = false;
             if(empty($code)){
-                $this->display('share_verify.html');
+
             }
             else if($code != 233){
                 $this->err = true;
