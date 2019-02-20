@@ -464,7 +464,7 @@ class CloudController extends BaseController
     
     //检验文件名称非法
     private function nameIllegal($name){
-        $a="/</|/>/|/\?/|/\*/|///|\|";
+        $a="/</|/>/|/\?/|/\*/|///|/\|/";
         if(preg_match($a,$name)) return false;
         return true;
     }
