@@ -23,7 +23,7 @@ class CloudController extends BaseController
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
     }
 
-    //显示文件及文件夹    
+    //显示文件及文件夹
     public function actionShow()
     {
         if (!$this->islogin) ERR::Catcher(2001);
@@ -40,7 +40,7 @@ class CloudController extends BaseController
     {
         if (!$this->islogin) ERR::Catcher(2001);
         $db=new Model("disk_file");
-        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir,path from disk_file where uid=:uid and deleted=1',array(':uid'=>$_SESSION['uid'])));   
+        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir,path from disk_file where uid=:uid and deleted=-1',array(':uid'=>$_SESSION['uid'])));
     }
 
     //删除文件及文件夹
@@ -62,7 +62,7 @@ class CloudController extends BaseController
         if($result['is_dir']==0)
         {
             $sumsize=$result['filesize'];
-            $db->update($condition,array('deleted'=>1));
+            $db->update($condition,array('deleted'=>-1));
             //改变空间大小
             $db = new Model('users');
             $condition=array('uid'=>$_SESSION['uid']);
@@ -74,21 +74,20 @@ class CloudController extends BaseController
             SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
         }
         //文件夹
-        
+
+        $fid = $result['fid'];
         //改变空间大小
         $condition=array('path like :path and uid=:uid and deleted=0',':path'=>arg('path').'%',':uid'=>$_SESSION['uid']);
         $result=$db->findAll($condition);
-        if($result==false)ERR::Catcher(1002);
         $sumsize=0;
         for($i=0;$i<count($result);$i++){
             $sumsize=$sumsize+$result[$i]['filesize'];
         }
         //删除文件夹下属文件及文件夹
-        $result=$db->update($condition,array('deleted'=>1));
-        if($result==0)ERR::Catcher(1002);
+        $result=$db->update($condition,array('deleted'=>$fid));
         //删除文件夹本身
-        $condition=array('path'=>$path,'filename'=>$filename,'uid'=>$_SESSION['uid']);
-        $result=$db->update($condition,array('deleted'=>1));
+        $condition=array('fid'=>$fid);
+        $result=$db->update($condition,array('deleted'=>-1));
         if($result==0)ERR::Catcher(1002);
         //更新剩余空间
         $db = new Model('users');
@@ -99,13 +98,13 @@ class CloudController extends BaseController
         $db->update($condition,$newrow);
         $result = $db->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
-        
+
     }
 
     //新建文件夹
     public function actionNewfolder()
     {
-        if (!$this->islogin) ERR::Catcher(2001); 
+        if (!$this->islogin) ERR::Catcher(2001);
         if (!arg('path')) ERR::Catcher(1003);
         if(!self::is_path_legal(arg('path'))) ERR::Catcher(1004);
         if(!self::is_path_existed(arg('path'))) ERR::Catcher(6002);
@@ -119,8 +118,7 @@ class CloudController extends BaseController
             "path"      =>$path,
             "is_dir"    =>1,
             "filesize"  =>0,
-            "hash"      =>0
-
+            "hash"      =>''
         );
         $result=$db->create($newrow);
         if(!$result)ERR::Catcher(1002);
@@ -130,7 +128,7 @@ class CloudController extends BaseController
     //复制文件
     public function actionCopy()
     {
-        if (!$this->islogin) ERR::Catcher(2001); 
+        if (!$this->islogin) ERR::Catcher(2001);
         if (!arg('src')) ERR::Catcher(1003);
         if (!arg('dst')) ERR::Catcher(1003);
         if(!self::is_path_legal(arg('src'))) ERR::Catcher(1004);
@@ -143,8 +141,8 @@ class CloudController extends BaseController
         $name2=self::getName(arg('dst'));
         $filename2=$name2[0];
         $path2=$name2[1];
-        $db = new Model('users');
-        $result = $db->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
+        $users = new Model('users');
+        $result = $users->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
         $maxsize=$result['capacity']-$result['used'];
         $db=new Model("disk_file");
         $condition=array('uid'=>$_SESSION['uid'],'filename'=>$filename1,'path'=>$path1);
@@ -159,31 +157,18 @@ class CloudController extends BaseController
             "filesize"  =>$result['filesize'],
             "hash"      =>$result['hash'],
             'deleted'   =>$result['deleted']
-
         );
         $result=$db->create($newrow);
         if($result==FALSE)ERR::Catcher(1002);
         //修改剩余空间
-        $db = new Model('users');
         $condition=array('uid'=>$_SESSION['uid']);
-        $result=$db->find($condition);
+        $result=$users->find($condition);
         $used=$result['used']+$sumsize;
         $newrow = array("used" => $used);
-        $db->update($condition,$newrow);
-        $result = $db->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
+        $users->update($condition,$newrow);
+        $result = $users->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
     }
-
-
-
-
-
-
-
-
-
-
-
 
     //查看文件内容
     public function actionPreview()
@@ -207,7 +192,6 @@ class CloudController extends BaseController
         header('Content-Type:'.$mime[$extension]);
         header("filename:".$filename);
         readfile($dir);
-        exit;       
     }
 
     //下载文件
@@ -224,12 +208,12 @@ class CloudController extends BaseController
         $db=new Model("disk_file");
         $result=$db->find($condition);
         if($result==false)ERR::Catcher(6003);
-        $hash=$result['hash']; 
-        $dir=CONFIG::GET('CLOUD_FILE_DIRECTORY').DS.substr($hash, 0, 2).DS.substr($hash, 2);         
-        header ("Content-type: application/octet-stream");    
-        header ("Accept-Ranges: bytes");    
-        header ("Accept-Length: ".filesize($dir) );    
-        header ( "Content-Disposition: attachment; filename=".$filename );       
+        $hash=$result['hash'];
+        $dir=CONFIG::GET('CLOUD_FILE_DIRECTORY').DS.substr($hash, 0, 2).DS.substr($hash, 2);
+        header ("Content-type: application/octet-stream");
+        header ("Accept-Ranges: bytes");
+        header ("Accept-Length: ".filesize($dir) );
+        header ( "Content-Disposition: attachment; filename=".$filename );
         readfile($dir);
         exit;
     }
@@ -251,18 +235,18 @@ class CloudController extends BaseController
         if(!$result==false)ERR::Catcher(6004);
         //上传文件
         $fileInfo=$_FILES['file'];
-        $db = new Model('users');
-        $result = $db->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
+        $users = new Model('users');
+        $result = $users->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
         $maxsize=$result['capacity']-$result['used'];
         $filesize=$fileInfo['size'];
         $hash=self::getSHA($fileInfo);
         $dir=CONFIG::GET('CLOUD_FILE_DIRECTORY').DS.substr($hash, 0, 2).DS.substr($hash, 2);
-    
-        if($fileInfo['error']>0)ERR::Catcher(6005);      
+
+        if($fileInfo['error']>0)ERR::Catcher(6005);
         if(!is_uploaded_file($fileInfo['tmp_name']))ERR::Catcher(6005);
-        if(!$fileInfo['size']<=$maxsize)ERR::Catcher(6005);
+        if($fileInfo['size']>$maxsize)ERR::Catcher(6005);
         if(!file_exists($dir))move_uploaded_file($fileInfo['tmp_name'],$dir);
-        
+
         //数据库操作
         $newrow=array(
             'uid'     =>$_SESSION['uid'],
@@ -272,17 +256,15 @@ class CloudController extends BaseController
             'is_dir'  =>0,
             'filesize'=>$filesize
         );
-        $db=new Model('disk_file');
         $db->create($newrow);
         if($result==false)ERR::Catcher(1002);
         //剩余空间
-        $db = new Model('users');
         $condition=array('uid'=>$_SESSION['uid']);
-        $result=$db->find($condition);
+        $result=$users->find($condition);
         $used=$result['used']+$filesize;
         $newrow = array("used" => $used);
-        $db->update($condition,$newrow);
-        $result = $db->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
+        $users->update($condition,$newrow);
+        $result = $users->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
     }
 
@@ -300,14 +282,13 @@ class CloudController extends BaseController
         $hash = strtolower(arg('hash'));
         if (!preg_match('/^[0-9a-f]{40}$/', $hash)) ERR::Catcher(1004);
         $dir=CONFIG::GET('CLOUD_FILE_DIRECTORY').DS.substr($hash, 0, 2).DS.substr($hash, 2);
-        
+
         //数据库上传
         if(!file_exists($dir))ERR::Catcher(6003);
         $newrow=array(
             'uid'     =>$_SESSION['uid'],
             'path'    =>$path,
             'filename'=>$filename,
-            'time'    =>time(),
             'hash'    =>$hash,
             'is_dir'  =>0,
             'filesize'=>$result['filesize']
@@ -325,7 +306,7 @@ class CloudController extends BaseController
         $result = $db->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
     }
-    
+
     //重命名
     public function actionRename(){
         if (!$this->islogin) ERR::Catcher(2001);
@@ -388,11 +369,11 @@ class CloudController extends BaseController
                     ':oldpath'=>$oldpath,
                     ':newpath'=>$newpath,
                     ':uid'=>$_SESSION['uid'],
-                ));         
+                ));
             }
         }
         SUCCESS::Catcher('success', true);
-    }    
+    }
 
     //用到的函数
 
@@ -406,7 +387,7 @@ class CloudController extends BaseController
         }
         return hash_final($ctx);
     }
-    
+
     //文件路径是否正确
     private function is_path_legal($path)
     {
@@ -425,11 +406,10 @@ class CloudController extends BaseController
         $filename=$name[0];
         $path=$name[1];
         $db=new Model("disk_file");
-        $condition=array('uid'=>$_SESSION['uid'],'path'=>$path);
+        $condition=array('uid'=>$_SESSION['uid'],'path'=>$path,'filename'=>$filename,'is_dir'=>1);
         $result=$db->find($condition);
         if($result==false) return false;
         return true;
-
     }
 
     private function getName($path)
@@ -439,10 +419,10 @@ class CloudController extends BaseController
         if($path[-1]=='/')
         {
             $name=array();
-            if($path=='/') 
+            if($path=='/')
             {
                 $name[0]='';
-                $name[1]='/'; 
+                $name[1]='/';
                 return $name;
             }
 
@@ -468,7 +448,4 @@ class CloudController extends BaseController
         if(preg_match($a,$name)) return false;
         return true;
     }
-
-
-
 }
