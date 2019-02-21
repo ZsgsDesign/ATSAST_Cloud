@@ -339,6 +339,147 @@ class CloudController extends BaseController
         $result = $db->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
     }
+    
+    //重命名
+    public function actionRename(){
+        if (!$this->islogin) ERR::Catcher(2001);
+        if (!$path=arg('path')) ERR::Catcher(1003);
+        if (!self::is_path_legal(arg('path'))) ERR::Catcher(1004);
+        if (!self::is_path_existed(arg('path'))) ERR::Catcher(6002);
+        if (!$oldname=arg("oldname")) ERR::Catcher(1003);
+        if (!$newname=arg("newname")) ERR::Catcher(1003);
+        //重名
+        $db=new Model('disk_file');
+        $condition=array(
+            'uid'=>$_SESSION['uid'],
+            'deleted'=>0,
+            'path'=>$path,
+            'filename'=>$newname,
+        );
+        $result=$db->find($condition);
+        if (!empty($result)) {
+            ERR::Catcher(6004);
+        }
+        //检验是否为文件夹
+        $condition3=array(
+            'uid'=>$_SESSION['uid'],
+            'deleted'=>0,
+            'path'=>$path,
+            'filename'=>$oldname,
+        );
+        $result3=$db->find($condition);
+        //若是文件
+        if (empty($result3['is_dir'])||$result3['is_dir']==0) {
+            $db->update(
+               $condition3,
+               array(
+                    'filename'=>$newname,
+                )
+            );
+        } 
+        //若是文件夹
+        else {
+            if (namaIllegal($newname)) {
+                ERR::Catcher(1004);
+            }
+            //目标是否有子文件
+            $oldpath=$path."/".$oldname;
+            $condition2=array(
+            "uid=:uid and deleted=0 and path like :path",
+            ":path"=>$oldpath.'%',
+            ':uid'=>$_SESSION['uid'],
+            );
+            $result2=$db->find($condition2);
+            //若无
+            if (empty($result2)) {
+                $db->update(
+                    $condition3,
+                    array(
+                        'path'=>$path,
+                    )
+                );
+            } 
+            //若有
+            else {
+                    $db->query('update diskfile set path =replace(path,:oldpath,:newpath) where uid=:uid and deleted=0',
+                array(
+                    ':oldpath'=>$oldpath,
+                    ':newpath'=>$newpath,
+                    ':uid'=>$_SESSION['uid'],
+                ));
+            }
+        }
+        SUCCESS::Catcher('success', true);
+    }
+
+    //移动
+    public function actionMove(){
+        if (!$this->islogin) ERR::Catcher(2001);
+        if ((!arg('oldpath'))||(!arg('newpath'))||(!arg('filename'))) ERR::Catcher(2003);
+        if ((!self::is_path_legal(arg('oldpath')))||(!self::is_path_legal(arg('newpath')))) ERR::Catcher(1004);
+        if ((!self::is_path_existed(arg('oldpath')))||(!self::is_path_existed(arg('newpath')))) ERR::Catcher(6002);
+        $oldpath=arg('oldpath');
+        $newpath=arg('newpath');
+        $filename=arg('filename');
+        //重名
+        $db=new Model('disk_file');
+        $condition=array(
+            'uid'=>$_SESSION['uid'],
+            'deleted'=>0,
+            'path'=>$newpath,
+            'filename'=>$filename,
+        );
+        $result=$db->find($condition);
+        if(!empty($result)){
+            ERR::Catcher(6004);
+        }
+        //所移动目标是否为文件夹
+        $condition2=array(
+            'uid'=>$_SESSION['uid'],
+            'deleted'=>0,
+            'path'=>$oldpath,
+            'filename'=>$filename,
+        );
+        $result2=$db->find($condition2);
+        //若是文件
+        if (empty($result3['is_dir'])||$result3['is_dir']==0) {
+            $db->update(
+                $condition2,
+                array(
+                    'path'=>$newpath,
+                ));
+            SUCCESS::Catcher('success', true);
+        }
+        //若是文件夹
+        //判断文件夹内是否为空
+        //若空
+        $path2=$oldpath.'/'.$filename;
+        $condition3=array(
+            'uid'=>$_SESSION['uid'],
+            'deleted'=>0,
+            'path'=>$path2,
+        );
+        $result3=$db->find($condition3);
+        if (empty($result3)) {
+            $db->update(
+                $condition2,
+                array(
+                    'path'=>$newpath,
+                ));
+            SUCCESS::Catcher('success', true);
+        }        
+        //若不为空
+        else{
+            $db->query(
+            'update diskfile set path =replace(path,:oldpath,:newpath) where uid=:uid and deleted=0',
+            array(
+                ':oldpath'=>$oldpath,
+                ':newpath'=>$newpath,
+                ':uid'=>$_SESSION['uid'],
+            ));
+            SUCCESS::Catcher('success', true);
+        }
+    }
 
     //用到的函数
 
@@ -406,6 +547,13 @@ class CloudController extends BaseController
             $name[1]=substr($path,0,strlen($path)-strlen($name[0])-1)."/";
             return $name;
         }
+    }
+    
+    //检验文件名称非法
+    private function nameIllegal($name){
+        $pattern="/<|>|\?|\*|\/|\|/";
+        if(preg_match($pattern,$name)) return true;
+        return false;
     }
 
 
