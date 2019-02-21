@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `disk_file` (
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `hash` char(40) NOT NULL,
   `is_dir` tinyint(1) NOT NULL,
-  `deleted` int(11) NOT NULL DEFAULT '0',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
   `filesize` int(11) NOT NULL,
   PRIMARY KEY (`fid`),
   KEY `uid` (`uid`,`deleted`)
