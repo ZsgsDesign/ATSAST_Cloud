@@ -46,6 +46,8 @@ class ERR {
             '6003' => '文件不存在',
             '6004' => '文件重名',
             '6005' => '文件上传失败',
+
+            '6100' => '分享不存在',
         );
         return isset($ERR_DESC[$ERR_CODE])?$ERR_DESC[$ERR_CODE]:$ERR_DESC['1000'];
     }

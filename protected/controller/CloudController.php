@@ -556,6 +556,39 @@ class CloudController extends BaseController
         return false;
     }
 
+    public function actionViewShare() //查看分享
+    {
+        $sid = $this->sid = arg('sid');
+        $this->err = false;
+        $path=arg('path');
+
+        $sql = "SELECT filename,disk_file.time,filesize,is_dir FROM disk_file JOIN disk_share ON disk_share.fid = disk_file.fid WHERE sid=:sid AND path=:path AND deleted=0";
+        $share = new Model('disk_share');
+        if(empty($this->sid))
+            $this->jump("");
+        else{
+            $s = $share->findAll(array("sid=:sid","sid" => $sid));
+            if(!count($s)) //找不到分享
+                $this->display('share_404.html');
+            else if(!empty($s[0]['pswd'])){
+                if(empty($_COOKIE['share_'.$sid]))
+                    $this->display('share_verify.html');
+                else if ($_COOKIE['share_'.$sid] != $s[0]['pswd']){
+                    $this->err = true;
+                    $this->display('share_verify.html');
+                }
+                else{
+                    SUCCESS::Catcher("success",$share->query($sql,array("sid"=>$sid,"path"=>$path)));
+                    //$this->display('share_view.html');
+                }
+            }
+            else {
+                SUCCESS::Catcher("success",$share->query($sql,array("sid"=>$sid,"path"=>$path)));
+                //$this->display('share_view.html');
+            }
+        }
+    }
+
     public function actionCreateShare() //创建分享
     {
         if (!$this->islogin)
@@ -563,12 +596,48 @@ class CloudController extends BaseController
         if (!arg('fid'))
             ERR::Catcher(1003);
         $share = new Model('disk_share');
-
+        $files = arg('fid');
+        $pswd = arg('pswd');
+        $expire = arg('expire');
+        $sid = str_rand(8);
+        foreach ($files as $f){
+            $share->create(array(
+                "sid"    => $sid,
+                "uid"    => $_SESSION['uid'],
+                "fid"    => $f,
+                "pswd"   => $pswd,
+                "expire" => $expire,
+            ));
+        }
+        SUCCESS::Catcher("分享成功",array("sid"=>$sid));
     }
 
     public function actionCancelShare() //取消分享
     {
         if (!$this->islogin)
             ERR::Catcher(2001);
+        else if (!arg('sid'))
+            ERR::Catcher(1003);
+        else{
+            $share = new Model('disk_share');
+            $count = $share->delete(array("sid=:sid AND uid=:uid",
+                "sid" => arg('sid'),
+                "uid" => $_SESSION['uid']));
+            if($count)
+                ERR::Catcher(6100);
+            else
+                SUCCESS::Catcher("取消分享成功");
+        }
+    }
+
+    function str_rand($length = 32, $char = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+        if(!is_int($length) || $length < 0) {
+            return false;
+        }
+        $string = '';
+        for($i = $length; $i > 0; $i--) {
+            $string .= $char[mt_rand(0, strlen($char) - 1)];
+        }
+        return $string;
     }
 }
