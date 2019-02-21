@@ -408,5 +408,19 @@ class CloudController extends BaseController
         }
     }
 
+    public function actionCreateShare() //创建分享
+    {
+        if (!$this->islogin)
+            ERR::Catcher(2001);
+        if (!arg('fid'))
+            ERR::Catcher(1003);
+        $share = new Model('disk_share');
 
+    }
+
+    public function actionCancelShare() //取消分享
+    {
+        if (!$this->islogin)
+            ERR::Catcher(2001);
+    }
 }
