@@ -96,8 +96,6 @@ class CloudController extends BaseController
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
 
     }
-
-    
     //新建文件夹
     public function actionNewfolder()
     {
