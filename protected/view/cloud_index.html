@@ -13,159 +13,808 @@
     td {
         height: fit-content;
     }
+    .clickable {
+        cursor: pointer;
+    }
+    a.noc {
+        color: #212529;
+    }
+    .overflow-hidden {
+        overflow: hidden;
+    }
+    .cloud-custom-file {
+        opacity: 0;
+        position: relative;
+        top: -.46875rem;
+        left: -1rem;
+        width: calc(100% + 2rem);
+        height: 100%;
+        cursor: pointer;
+    }
 </style>
 <div class="container">
     <nav aria-label="breadcrumb" class="mt-3">
         <ol class="breadcrumb align-items-center p-2">
-            <li><button type="button" class="btn btn-lg px-2 py-1 mb-0"><i class="MDI arrow-left"></i></button></li>
-            <li><button type="button" class="btn btn-lg px-2 py-1 mb-0"><i class="MDI arrow-right"></i></button></li>
-            <li><button type="button" class="btn btn-lg px-2 py-1 mb-0"><i class="MDI refresh"></i></button></li>
-            <li><button type="button" class="btn btn-lg btn-dark px-2 py-1 mb-0" data-toggle="button"><i class="MDI delete-empty"></i></button></li>
-            <li class="breadcrumb-item"><a href="#/">Home</a></li>
-            <li class="breadcrumb-item"><a href="#/">Home</a></li>
-            <li class="breadcrumb-item"><a href="#/">Home</a></li>
-            <li class="breadcrumb-item"><a href="#/">Home</a></li>
-            <li class="breadcrumb-item"><a href="#/">Home</a></li>
-            <li class="breadcrumb-item"><a href="#/">Home</a></li>
-            <li class="breadcrumb-item"><a href="#/">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Sample</li>
+            <li><button type="button" class="btn btn-lg btn-dark px-2 py-1 mb-0" data-toggle="button" id="trashBtn"><i class="MDI delete-empty"></i></button></li>
+            <li><button type="button" class="btn btn-lg btn-dark px-2 py-1 mb-0" data-toggle="button" id="shareBtn" disabled><i class="MDI share-variant"></i></button></li>
+            <li><button type="button" class="btn btn-lg px-2 py-1 mb-0" id="refresh"><i class="MDI refresh"></i></button></li>
+            <li class="breadcrumb-item active" aria-current="page">根目录</li>
         </ol>
     </nav>
-    <button class="btn"><i class="MDI upload"></i> 上传文件</button>
-    <button class="btn"><i class="MDI folder-plus"></i> 新建文件夹</button>
+    <button class="btn nf overflow-hidden" id="uploadBtn"><div class="position-absolute h-100"><input type="file" class="cloud-custom-file" id="files" multiple/></div><i class="MDI upload lead align-middle"></i><span class="d-none d-sm-inline"> 上传文件 <span class="badge badge-pill badge-secondary" id="uploadings"></span></span></button>
+    <button class="btn nf" id="newFolder"><i class="MDI folder-plus lead align-middle"></i><span class="d-none d-sm-inline"> 新建文件夹</span></button>
     <div class="float-right">
         <button type="button" class="btn btn-lg float-right" id="order">
-            <i class="MDI sort-ascending"></i>
+            <i class="MDI sort-ascending" id="orderIcon"></i>
         </button>
         <button type="button" class="btn btn-lg dropdown-toggle float-right" id="sortby" data-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">
             <span class="MDI sort" aria-hidden="true" aria-label="排序"></span>
         </button>
         <div class="dropdown-menu" aria-labelledby="sortby">
-            <a class="dropdown-item" href="#">名称</a>
-            <a class="dropdown-item" href="#">大小</a>
-            <a class="dropdown-item" href="#">修改时间</a>
+            <a class="dropdown-item" href="javascript:sortBy('name');">名称</a>
+            <a class="dropdown-item" href="javascript:sortBy('size');">大小</a>
+            <a class="dropdown-item" href="javascript:sortBy('time');">上传时间</a>
         </div>
     </div>
     <table class="table col-12 table-hover table">
         <thead>
             <tr class="row mx-0">
-                <th class="col-lg-9 col-md-8 col-sm-6 breakall">文件名 <i class="MDI arrow-up-bold"></i></th>
-                <th class="col-md-1 col-sm-2 d-none d-sm-block small">大小</th>
-                <th class="col-lg-2 col-md-3 col-sm-4 d-none d-sm-block small">上传时间</th>
+                <th class="col-lg-9 col-md-7 col-sm-6 clickable cname">文件名 <i class="MDI arrow-up-bold align-middle si" id="siname"></i></th>
+                <th class="col-lg-1 col-sm-2 col-4 d-none d-sm-block small clickable csize">大小 <i class="MDI arrow-up-bold align-middle si d-none" id="sisize"></i></th>
+                <th class="col-lg-2 col-md-3 col-sm-4 col-4 d-none d-sm-block small clickable ctime">上传时间 <i class="MDI arrow-up-bold align-middle si d-none" id="sitime"></i></th>
             </tr>
         </thead>
-        <tbody>
-            <tr class="row mx-0" data-toggle="collapse" data-target="#op0" aria-expanded="true" aria-controls="collapseOne">
-                <td class="col-lg-9 col-md-8 col-sm-6 breakall"><i class="MDI folder"></i> 学习资料</td>
-                <td class="col-md-1 col-sm-2 d-none d-sm-block small">-</td>
-                <td class="col-lg-2 col-md-3 col-sm-4 d-none d-sm-block small">-</td>
-            </tr>
-            <tr class="row mx-0 collapse" id="op0" data-parent="table">
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI download"></i> 下载</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI eye"></i> 预览</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI share-variant"></i> 分享</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI pencil"></i> 移动</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI delete"></i> 删除</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI content-copy"></i> 复制</button></td>
-            </tr>
-            <tr class="row mx-0" data-toggle="collapse" data-target="#op1" aria-expanded="true" aria-controls="collapseOne">
-                <td class="col-lg-9 col-md-8 col-sm-6 breakall"><i class="MDI file"></i> README.md<br><span class="sub">/sample</span></td>
-                <td class="col-md-1 col-sm-2 d-none d-sm-block small">233KB</td>
-                <td class="col-lg-2 col-md-3 col-sm-4 d-none d-sm-block small">2019-1-27 21:06:31</td>
-            </tr>
-            <tr class="row mx-0 collapse" id="op1" data-parent="table">
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI download"></i> 下载</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI eye"></i> 预览</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI share-variant"></i> 分享</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI pencil"></i> 移动</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI delete"></i> 删除</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI content-copy"></i> 复制</button></td>
-            </tr>
-            <tr class="row mx-0" data-toggle="collapse" data-target="#op2" aria-expanded="true" aria-controls="collapseOne">
-                <td class="col-lg-9 col-md-8 col-sm-6 breakall"><i class="MDI file"></i> Long.Long.Long.Long.Long.Long.Long.Long.Long.Long.File.Name.mp4<br><span class="sub">/sample</span></td>
-                <td class="col-md-1 col-sm-2 d-none d-sm-block small">233KB</td>
-                <td class="col-lg-2 col-md-3 col-sm-4 d-none d-sm-block small">2019-1-27 21:06:31</td>
-            </tr>
-            <tr class="row mx-0 collapse" id="op2" data-parent="table">
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI download"></i> 下载</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI eye"></i> 预览</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI share-variant"></i> 分享</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI pencil"></i> 移动</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI delete"></i> 删除</button></td>
-                <td class="col-sm-2 col-6 p-1"><button class="btn m-0"><i class="MDI content-copy"></i> 复制</button></td>
-            </tr>
-        </tbody>
     </table>
 </div>
+<div id="alert" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="alert_title">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="alert_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="alert_desc"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="confirm" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="confirm_title">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirm_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm_desc" class="breakall"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirm_confirm">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="prompt" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="prompt_title">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="prompt_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input class="form-control" id="prompt_input"/>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="prompt_confirm">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="upload" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="upload_title">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="upload_title">上传文件</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <button class="btn nf overflow-hidden" id="selectFile"><div class="position-absolute h-100"></div><i class="MDI file-outline lead align-middle"></i><span class="d-none d-sm-inline"> 继续上传文件</span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="<{$ATSAST_CDN}>/js/sha1.min.js"></script>
 <script>
+    // filesha1.js // maybe
+    if (!File.prototype.slice) File.prototype.slice = File.prototype.mozSlice || File.prototype.webkitSlice;
+
+    function FileSHA1(fileobj, callback) {
+        var len = fileobj.size;
+        var off = 0;
+        var hash = sha1.create();
+        hash.update(len + "\0");
+        var reader = new FileReader();
+        function next() {
+            var end = off + 1048576;
+            if (end > len) end = len;
+            reader.readAsArrayBuffer(fileobj.slice(off, end));
+        }
+        reader.onload = function(e) {
+            off += e.target.result.byteLength;
+            hash.update(e.target.result);
+            if (len > off) next();
+            else callback(hash.hex());
+        }
+        reader.onerror = function(e) {
+            console.warn("Error occured!");
+            callback(null);
+        }
+        next();
+    }
+
+    // Uploader
+    function Uploader(path, file) {
+        var hash, ready, progress, success, fail, done;
+        function successed(arg) {
+            if (done) setTimeout(done, 0);
+            if (success) success(arg);
+        }
+        function failed(arg) {
+            if (done) setTimeout(done, 0);
+            if (fail) fail(arg);
+        }
+        var reqFail = function(ev) {
+            failed("网络错误");
+        }
+        // param: hash
+        // won't execute if fast-transmitted
+        this.onready = function(callback) {
+            ready = callback;
+            return this;
+        }
+        // param: progress event
+        this.onprogress = function(callback) {
+            progress = callback;
+            return this;
+        }
+        // param: is fast-transmission
+        this.onsuccess = function(callback) {
+            success = callback;
+            return this;
+        }
+        // param: failure reason
+        this.onfail = function(callback) {
+            fail = callback;
+            return this;
+        }
+        // param: none
+        this.ondone = function(callback) {
+            done = callback;
+            return this;
+        }
+        // start uploading
+        this.start = function() {
+            FileSHA1(file, function(hash) {
+                this.hash = hash;
+                $.post("/cloud/fileExists", {hash: hash}, function(data) {
+                    data = JSON.parse(data);
+                    if (data.data) {
+                        $.post("/cloud/hashupload", {hash: hash, path: path}, function(data) {
+                            data = JSON.parse(data);
+                            if (data.ret == 200) successed(true);
+                            else failed(data.desc);
+                        }).fail(reqFail);
+                    } else {
+                        if (ready) setTimeout(function() {
+                            ready(hash);
+                        }, 0);
+                        var form = new FormData();
+                        form.append("path", path);
+                        form.append("file", file);
+                        $.ajax({
+                            type: "POST",
+                            url: "/cloud/upload",
+                            enctype: "application/x-www-form-urlencoded",
+                            contentType: false,
+                            data: form,
+                            processData: false,
+                            xhr: function() {
+                                var xhr = $.ajaxSettings.xhr();
+                                xhr.upload.onprogress = function(ev) {
+                                    if (progress) progress(ev);
+                                };
+                                return xhr;
+                            },
+                            success: function(data) {
+                                data = JSON.parse(data);
+                                if (data.ret == 200) {
+                                    successed(false);
+                                } else {
+                                    failed(data.desc)
+                                }
+                            },
+                            error: reqFail
+                        });
+                    }
+                }).fail(reqFail);
+            });
+            return this;
+        }
+    }
+</script>
+<script>
+    // Operations
+    function getPath(ev) {
+        for (var i = 0; i < ev.path.length; ++i) if (ev.path[i].path) return ev.path[i].path;
+        return undefined;
+    }
+    function getName(path) {
+        if (typeof path != "string") path = getPath(path);
+        if (path.endsWith("/")) {
+           return path.substring(path.lastIndexOf("/", path.length - 2) + 1, path.length - 1);
+        }
+        return path.substr(path.lastIndexOf("/") + 1);
+    }
+    const supportedExts = ['.bmp', '.jpg', '.pdf', '.png', '.txt'];
+    const operations = {
+        download: {
+            icon: 'download',
+            desc: '下载',
+            action: function(ev) {
+                window.open('download?path=' + escape(getPath(ev)));
+            }
+        },
+        preview: {
+            icon: 'eye',
+            desc: '预览',
+            action: function(ev) {
+                window.open('preview?path=' + escape(getPath(ev)));
+            }
+        },
+        rename: {
+            icon: 'pencil',
+            desc: '重命名',
+            action: function(ev) {
+                var name = getName(ev);
+                var pos = name.endsWith('/') ? -1 : name.lastIndexOf('.');
+                prompt("重命名为", function(newName) {
+                    if (name == newName) return;
+                    if (!newName) return;
+                    if (newName.match(/[\\\/:*?"<>|\n]/)) {
+                        alert("文件名含有非法字符！");
+                        return;
+                    }
+                    if (newName == '.' || newName == '..') {
+                        alert("文件名非法！");
+                        return;
+                    }
+                    console.log(newName);
+                }, name, pos == -1 ? true : [0, pos]);
+            }
+        },
+        share: {
+            icon: 'share-variant',
+            desc: '分享',
+            action: function(ev) {
+                var path = getPath(ev);
+                console.log(path);
+            }
+        },
+        move: {
+            icon: 'content-copy',
+            desc: '移动',
+            action: function(ev) {
+                var path = getPath(ev);
+                console.log(path);
+            }
+        },
+        delete: {
+            icon: 'delete',
+            desc: '删除',
+            action: function(ev) {
+                var path = getPath(ev), fn = getName(path);
+                if (path.endsWith("/")) fn = "夹" + fn;
+                confirm(`是否删除文件${fn}？`, "确认删除", function(result) {
+                    if (result) {
+                        $.post("delete", {path: path}, function(data) {
+                            data = JSON.parse(data);
+                            if (data.ret == 200) {
+                                loadFileList();
+                            } else {
+                                alert(data.desc);
+                            }
+                        }).fail(networkErr);
+                    }
+                }, "btn-danger active");
+            }
+        },
+        recover: {
+            icon: 'undo',
+            desc: '恢复文件',
+            action: function(ev) {
+                var path = getPath(ev);
+                console.log(path);
+            }
+        }
+    };
     // Search
     document.getElementsByClassName("navbar")[0].getElementsByTagName("form")[0].onsubmit = function(e) {
         e.preventDefault();
     }
     onsearch = function(e) {
-        var $q = $("input[name=q]");
-        $q.blur();
-        console.log($q.val());
+        console.log($("input[name=q]").blur().val());
     }
     // Location
-    var hstr = [];
     function availableHash(hash) {
+        if (hash == "#trash") return true;
+        if (hash == "#share") return true;
         if (!hash.startsWith('#/')) return false;
         if (!hash.endsWith('/')) return false;
-        if (hash.indexOf('/./') != -1) return false;
-        if (hash.indexOf('/../') != -1) return false;
+        if (hash.match(/[\\:*?"<>|]|\/\.\/|\/\.\.\//)) return false;
         return true;
     }
-    window.onhashchange = function(ev) {
-        console.log(ev);
+    var ignoreHashChange = false;
+    onhashchange = function(ev) {
+        if (ignoreHashChange) {
+            ignoreHashChange = false;
+            return;
+        }
         if (!availableHash(location.hash)) {
-            
+            location = ev.oldURL;
+            ignoreHashChange = true;
+            return;
+        }
+        if (location.hash == "#trash") {
+            buttonPress("trashBtn", true);
+            buttonPress("shareBtn", false);
+            $(".nf").attr("disabled", "");
+            $("#files").addClass("d-none");
+            document.title = "回收站 - SAST Cloud";
+        } else if (location.hash == "#share") {
+            buttonPress("shareBtn", true);
+            buttonPress("trashBtn", false);
+            $(".nf").attr("disabled", "");
+            $("#files").addClass("d-none");
+            document.title = "分享 - SAST Cloud";
+        } else {
+            buttonPress("trashBtn", false);
+            buttonPress("shareBtn", false);
+            $(".nf").attr("disabled", false);
+            $("#files").removeClass("d-none");
+            document.title = location.hash.substr(1) + " - SAST Cloud";
+        }
+        setNavbar(location.hash.substr(1));
+        loadFileList(location.hash.substr(1));
+    }
+    var currentPath = "/", tmpPath = "/";
+    function setNavbar(path) {
+        var list, prefix = "";
+        currentPath = path;
+        if (path == "trash") list = ["回收站"];
+        else if (path == "share") list = ["分享"];
+        else {
+            list = ("根目录" + path.substr(0, path.length - 1)).split('/');
+            tmpPath = path;
+            $("#trash").attr("aria-pressed", "false").removeClass("active");
+        }
+        $(".breadcrumb-item").remove();
+        var navbar = $(".breadcrumb")[0];
+        for (var i = 0; i < list.length; ++i) {
+            var ele = document.createElement("li");
+            ele.classList = "breadcrumb-item";
+            if (i == list.length - 1) {
+                ele.classList.add("active");
+                ele.setAttribute("aria-current", "page");
+                ele.innerText = list[i];
+            } else {
+                if (prefix) prefix += list[i] + "/";
+                else prefix = "#/";
+                ele.innerHTML = `<a href="${prefix}">${list[i]}</a>`;
+            }
+            navbar.appendChild(ele);
         }
     }
-    if (!availableHash(location.hash)) {
-        location.hash = "#/";
-    }
-    function backward() {
-
-        return false;
-    }
-    function foreward() {
-
-        return false;
-    }
     // File List
+    var currentFileList = [];
     function clearFileList() {
         $("tbody").remove();
     }
     function setFileList(list) {
+        if (!list) list = currentFileList;
+        else currentFileList = list;
         clearFileList();
+        list.sort(function(a, b) {
+            if (a.is_dir ^ b.is_dir) return b.is_dir - a.is_dir;
+            var key = window.key, order = window.order;
+            if (key != "size" && key != "time") key = "name";
+            if (key == "size") key = "filesize";
+            if (key != "name" && a[key] == b[key]) {
+                key = "name";
+                order = "ascending";
+            }
+            if (order == "descending") {
+                var t = a;
+                a = b;
+                b = t;
+            }
+            if (key == "filesize") {
+                return a.filesize - b.filesize;
+            }
+            if (key == "time") {
+                return new Date(a.time) - new Date(b.time);
+            }
+            a.name = a.filename.toLowerCase();
+            b.name = b.filename.toLowerCase();
+            return a.name < b.name ? -1 : a.name > b.name;
+        });
         var body = $("table")[0].createTBody();
-        
+        for (var i = 0; i < list.length; ++i) {
+            var f = list[i];
+            var row = body.insertRow();
+            row.classList = "row mx-0";
+            row.dataset.toggle = "collapse";
+            row.dataset.target = "#op" + i;
+            row.setAttribute("aria-expanded", "true");
+            row.setAttribute("aria-controls", "collapseOne");
+            var cell = row.insertCell();
+            cell.classList = "col-lg-9 col-md-7 col-sm-6 breakall cname";
+            var ele = document.createElement("i");
+            ele.classList = f.is_dir != 0 ? "MDI folder" : "MDI file";
+            cell.appendChild(ele);
+            if (f.is_dir != 0 && currentPath.startsWith('/')) {
+                cell.appendChild(document.createTextNode(' '));
+                ele = document.createElement("a");
+                ele.classList = "noc";
+                ele.href = `#${currentPath}${f.filename}/`;
+                ele.innerText = f.filename;
+                cell.appendChild(ele);
+            } else {
+                cell.appendChild(document.createTextNode(` ${f.filename}`));
+            }
+            if (f.path != undefined) {
+                cell.appendChild(document.createElement("br"));
+                ele = document.createElement("a");
+                ele.classList = "sub";
+                ele.href = '#' + f.path;
+                ele.innerText = f.path;
+                ele.onclick = function(ev) {
+                    ev.stopPropagation();
+                }
+                cell.appendChild(ele);
+            }
+            cell = row.insertCell();
+            cell.classList = "col-lg-1 col-sm-2 col-4 d-none d-sm-block small csize";
+            cell.innerText = f.is_dir != 0 ? "-" : bytesToString(f.filesize);
+            cell = row.insertCell();
+            cell.classList = "col-lg-2 col-md-3 col-sm-4 col-4 d-none d-sm-block small ctime";
+            cell.innerText = f.time;
+            row = body.insertRow();
+            row.classList = "row mx-0 collapse";
+            row.id = "op" + i;
+            row.dataset.parent = "table";
+            var ops = [];
+            if (currentPath == 'trash') ops = ['recover'];
+            else if (currentPath == 'share') ops = []; // TODO
+            else {
+                if (f.is_dir == 0) ops = ['download', 'preview'];
+                ops = ops.concat(['rename', 'share', 'move', 'delete']);
+            }
+            for (var op of ops) {
+                cell = row.insertCell();
+                cell.classList = `col-sm-${12/ops.length} col-6 p-1`;
+                var btn = document.createElement("button");
+                btn.classList = "btn m-0";
+                btn.addEventListener("click", operations[op].action);
+                btn.path = (f.path || currentPath) + f.filename + (f.is_dir != 0 ? '/' : '');
+                btn.innerHTML = `<i class="MDI ${operations[op].icon}"></i> ${operations[op].desc}`;
+                if (op == 'preview') btn.disabled = supportedExts.indexOf(f.filename.substr(f.filename.lastIndexOf('.'))) == -1;
+                cell.appendChild(btn);
+            }
+        }
+        showColumn(key);
     }
     function loadFileList(path) {
-
+        if (typeof path != "string") path = currentPath;
+        var query;
+        if (path[0] == "/") query = $.post("show", {path: path});
+        else if (path == "share") ; // TODO
+        else if (path == "trash") query = $.post("recycle", {});
+        if (query) query.done(function(data) {
+            data = JSON.parse(data);
+            if (data.ret == 200) {
+                setFileList(data.data);
+            } else {
+                alert(data.desc);
+            }
+        }).fail(networkErr);
+    }
+    var key = 'name', order = 'ascending';
+    function sortBy(key) {
+        $(".si").addClass("d-none");
+        $("#si" + key).removeClass("d-none");
+        window.key = key;
+        showColumn(key);
+        setFileList();
+    }
+    function sortOrder(order) {
+        $("#orderIcon")[0].classList = "MDI sort-" + order;
+        var oldcn = order == "ascending" ? "arrow-down-bold" : "arrow-up-bold";
+        var newcn = order == "ascending" ? "arrow-up-bold" : "arrow-down-bold";
+        $(".si").removeClass(oldcn).addClass(newcn);
+        window.order = order;
+        setFileList();
     }
     // UI
     window.onclick = function(ev) {
+        if (!ev.isTrusted) return;
         if (!ev.path.includes($("tbody")[0])) {
             $("table .collapse.show").collapse('hide');
         }
     };
-    // Shortcuts
-    window.onmouseup = function(ev) {
-        if (ev.button == 3) {
-            if (backward()) {
-                ev.preventDefault();
-            }
-        } else if (ev.button == 4) {
-            if (foreward()) {
-                ev.preventDefault();
-            }
+    function alert(desc, title) {
+        $('#alert_desc').html(desc);
+        $('#alert_title').html(title ? title : "提示");
+        $(".modal[id!=alert]").modal("hide");
+        $('#alert').modal();
+    }
+    function confirm(desc, title, callback, classList) {
+        if (typeof title == "function") {
+            classList = callback;
+            callback = title;
+            title = undefined;
         }
-    };
-    // sample
+        if (typeof callback != "function") {
+            classList = callback;
+            callback = undefined;
+        }
+        if (!classList) classList = "btn-primary";
+        $('#confirm_desc').html(desc);
+        $('#confirm_title').html(title ? title : "确认");
+        $(".modal[id!=confirm]").modal("hide");
+        $("#confirm_confirm")[0].classList = "btn " + classList;
+        $('#confirm').modal()[0].callback = callback;
+    }
+    function prompt(title, callback, defaultValue, selected) {
+        if (typeof callback != "function") {
+            selected = defaultValue;
+            defaultValue = callback;
+            callback = undefined;
+        }
+        if (!defaultValue) defaultValue = "";
+        if (selected == undefined) selected = false;
+        $("#prompt_title").html(title);
+        var input = $("#prompt_input").val(defaultValue)[0];
+        $(".modal[id!=prompt]").modal("hide");
+        $("#prompt").modal()[0].callback = callback;
+        if (selected) {
+            if (typeof selected == "object") input.setSelectionRange(selected[0], selected[1]);
+            else input.select();
+        }
+    }
+    // param: 'name' | 'size' | 'time'
+    function showColumn(name) {
+        if (name == 'name') {
+            $(".cname").removeClass("col-8");
+            $(".csize").addClass("d-none");
+            $(".ctime").addClass("d-none");
+        } else if (name == 'size') {
+            $(".cname").addClass("col-8");
+            $(".csize").removeClass("d-none");
+            $(".ctime").addClass("d-none");
+        } else if (name == 'time') {
+            $(".cname").addClass("col-8");
+            $(".csize").addClass("d-none");
+            $(".ctime").removeClass("d-none");
+        }
+    }
+    function buttonPress(id, state) {
+        if (state === undefined) return $("#" + id).attr("aria-pressed") == "true";
+        if (state != false) $("#" + id).attr("aria-pressed", "true").addClass("active");
+        else $("#" + id).attr("aria-pressed", "false").removeClass("active");
+    }
+    function networkErr() {
+        alert("加载失败");
+    }
+    function bytesToString(size) {
+        if (size < 1000) return size + "B";
+        var level = 0;
+        while (size >= 1000) {
+            size /= 1024;
+            ++level;
+        }
+        return size.toFixed(1) + ['B', 'KB', 'MB', 'GB', 'TB'][level];
+    }
+    // Init
     document.body.onload = function() {
-        
+        $("#order").click(function (ev) {
+            sortOrder($("#orderIcon").hasClass("sort-ascending") ? "descending" : "ascending");
+        });
+        $("#trashBtn").click(function (ev) {
+            setTimeout(function() {
+                if (buttonPress("trashBtn")) {
+                    location = "#trash";
+                } else {
+                    location = "#" + tmpPath;
+                }
+            }, 0);
+        });
+        $("#shareBtn").click(function (ev) {
+            setTimeout(function() {
+                if (buttonPress("shareBtn")) {
+                    location = "#share";
+                } else {
+                    location = "#" + tmpPath;
+                }
+            }, 0);
+        });
+        $("#refresh").click(loadFileList);
+        $("#uploadBtn").click(function(ev) {
+            $("#upload").modal();
+        });
+        $("#files").click(function(ev) {
+            ev.stopPropagation();
+        }).change(function(ev) {
+            var files = $("#files")[0];
+            var filelist = [];
+            for (var f of files.files) {
+                (function(f) {
+                    var fele = document.createElement("div");
+                    fele.classList = "my-4";
+                    var ele = document.createElement("span");
+                    ele.innerText = f.name;
+                    fele.appendChild(ele);
+                    fele.appendChild(document.createTextNode(" "));
+                    var badge = document.createElement("span");
+                    badge.classList = "badge badge-secondary";
+                    badge.innerText = "准备中";
+                    fele.appendChild(badge);
+                    fele.appendChild(document.createElement("br"));
+                    ele = document.createElement("a");
+                    ele.classList = "sub";
+                    ele.href = "#" + currentPath;
+                    ele.innerText = currentPath;
+                    fele.appendChild(ele);
+                    fele.appendChild(document.createTextNode(" "));
+                    ele = document.createElement("span");
+                    ele.classList = "sub";
+                    var current = document.createElement("span");
+                    current.innerText = "0B";
+                    ele.appendChild(current);
+                    ele.appendChild(document.createTextNode("/" + bytesToString(f.size)));
+                    fele.appendChild(ele);
+                    ele = document.createElement("div");
+                    ele.classList = "progress";
+                    var progress = document.createElement("div");
+                    progress.classList = "progress-bar";
+                    progress.setAttribute("role", "progressbar");
+                    progress.setAttribute("aria-valuenow", "0");
+                    progress.setAttribute("aria-valuemin", "0");
+                    progress.setAttribute("aria-valuemax", f.size);
+                    ele.appendChild(progress);
+                    fele.appendChild(ele);
+                    $("#upload .modal-body").append(fele);
+                    var $uplds = $("#uploadings");
+                    var left = $uplds.text();
+                    if (left) left = parseInt(left) + 1;
+                    else left = 1;
+                    $uplds.text(left);
+                    new Uploader(currentPath + f.name, f).onready(function(hash) {
+                        badge.classList = "badge badge-info";
+                        badge.innerText = "上传中";
+                    }).onprogress(function(ev) {
+                        current.innerText = bytesToString(ev.loaded);
+                        progress.style.width = ev.loaded * 100 / ev.total + "%";
+                        progress.setAttribute("aria-valuenow", ev.loaded);
+                    }).onsuccess(function(fast) {
+                        badge.classList = "badge badge-success";
+                        badge.innerText = (fast ? "秒" : "上") + "传成功";
+                        current.innerText = bytesToString(f.size);
+                        progress.style.width = "100%";
+                        progress.setAttribute("aria-valuenow", f.size);
+                    }).onfail(function(reason) {
+                        badge.classList = "badge badge-danger";
+                        badge.innerText = reason;
+                    }).ondone(function() {
+                        var left = parseInt($uplds.text()) - 1;
+                        $uplds.text(left ? left : "");
+                        loadFileList();
+                    }).start();
+                })(f);
+            }
+            files.value = "";
+            $("#upload div.h-100").append($("#files"))
+            $("#upload").modal();
+        });
+        $("#newFolder").click(function(ev) {
+            prompt("新建文件夹", function(name) {
+                if (name) {
+                    $.post("newFolder", {path: currentPath + name + "/"}, function(data) {
+                        data = JSON.parse(data);
+                        if (data.ret == 200) {
+                            loadFileList();
+                        } else {
+                            alert(data.desc);
+                        }
+                    }).fail(networkErr);
+                }
+            });
+        });
+        $("thead th").click(function (ev) {
+            var path = ev.originalEvent.path;
+            var key = "";
+            var keys = ["name", "size", "time"];
+            for (var i = 0; i < keys.length; ++i) {
+                if (path.includes($("thead .c" + keys[i])[0])) {
+                    key = keys[i];
+                    break;
+                }
+            }
+            if (!key) return;
+            if (key == window.key) {
+                sortOrder(order == "ascending" ? "descending" : "ascending");
+            } else {
+                sortBy(key);
+            }
+        });
+        $("#confirm_confirm").click(function(ev) {
+            var prompt = $("#confirm")[0];
+            if (prompt.callback) {
+                prompt.callback(true);
+                prompt.callback = undefined;
+                $("#confirm").modal("hide");
+            }
+        });
+        $("#confirm").on("hide.bs.modal", function(ev) {
+            var prompt = $("#confirm")[0];
+            if (prompt.callback) {
+                prompt.callback(false);
+                prompt.callback = undefined;
+            }
+        })
+        $("#prompt_confirm").click(function(ev) {
+            var prompt = $("#prompt")[0];
+            if (prompt.callback) {
+                prompt.callback($("#prompt_input").val());
+                prompt.callback = undefined;
+                $("#prompt").modal("hide");
+            }
+        });
+        $("#prompt_input").keydown(function(ev) {
+            if (ev.keyCode == 13) {
+                $("#prompt_confirm").click();
+            }
+        });
+        $("#prompt").on("shown.bs.modal", function(ev) {
+            $("#prompt_input").focus();
+        }).on("hide.bs.modal", function(ev) {
+            var prompt = $("#prompt")[0];
+            if (prompt.callback) {
+                prompt.callback(undefined);
+                prompt.callback = undefined;
+            }
+        });
+        $(".modal").click(function (ev) {
+            ev.stopPropagation();
+        });
+        if (!availableHash(location.hash)) {
+            location.hash = "#/";
+        } else {
+            onhashchange();
+        }
     };
 </script>

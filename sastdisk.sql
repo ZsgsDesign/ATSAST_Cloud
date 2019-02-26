@@ -16,14 +16,14 @@ CREATE TABLE IF NOT EXISTS `disk_file` (
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `hash` char(40) NOT NULL,
   `is_dir` tinyint(1) NOT NULL,
-  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `deleted` int(11) NOT NULL DEFAULT '0',
   `filesize` int(11) NOT NULL,
   PRIMARY KEY (`fid`),
   KEY `uid` (`uid`,`deleted`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 CREATE TABLE IF NOT EXISTS `disk_share` (
-  `sid` char(8) NOT NULL,
+  `sid` char(8) binary NOT NULL,
   `uid` int(11) NOT NULL,
   `fid` int(11) NOT NULL,
   `pswd` int(11) DEFAULT NULL,
