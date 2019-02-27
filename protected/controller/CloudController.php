@@ -125,7 +125,7 @@ class CloudController extends BaseController
         SUCCESS::Catcher('success',TRUE);
     }
 
-    //复制文件
+    //复制文件 // not used
     public function actionCopy()
     {
         if (!$this->islogin) ERR::Catcher(2001);
@@ -284,6 +284,12 @@ class CloudController extends BaseController
         $name=self::getName(arg('path'));
         $filename=$name[0];
         $path=$name[1];
+        //重名
+        $db=new Model('disk_file');
+        $condition=array('uid'=>$_SESSION['uid'],'deleted'=>0, 'path'=>$path,'filename'=>$filename);
+        $result=$db->find($condition);
+        if($result)ERR::Catcher(6004);
+        
         $hash = strtolower(arg('hash'));
         if (!preg_match('/^[0-9a-f]{40}$/', $hash)) ERR::Catcher(1004);
         $dir=CONFIG::GET('CLOUD_FILE_DIRECTORY').DS.substr($hash, 0, 2).DS.substr($hash, 2);
@@ -316,18 +322,24 @@ class CloudController extends BaseController
     //重命名
     public function actionRename(){
         if (!$this->islogin) ERR::Catcher(2001);
-        if (!$path=arg('path')) ERR::Catcher(1003);
-        if (!self::is_path_legal(arg('path'))) ERR::Catcher(1004);
-        if (!self::is_path_existed(arg('path'))) ERR::Catcher(6002);
         if (!$oldname=arg("oldname")) ERR::Catcher(1003);
         if (!$newname=arg("newname")) ERR::Catcher(1003);
+        if (!self::is_path_legal($newname)) ERR::Catcher(1004);
+
+        $newname = self::getName(arg("newname"));
+        $newpath = $newname[1];
+        $newname = $newname[0];
+        if (!self::is_path_existed($newpath)) ERR::Catcher(6002);
+        $oldname = self::getName(arg("oldname"));
+        $oldpath = $oldname[1];
+        $oldname = $oldname[0];
 
         //重名
         $db=new Model('disk_file');
         $condition=array(
             'uid'=>$_SESSION['uid'],
             'deleted'=>0,
-            'path'=>$path,
+            'path'=>$newpath,
             'filename'=>$newname,
         );
         $result=$db->find($condition);
@@ -335,193 +347,40 @@ class CloudController extends BaseController
             ERR::Catcher(6004);
         }
 
-        //检验是否为文件夹
-        $condition3=array(
+        $condition=array(
             'uid'=>$_SESSION['uid'],
             'deleted'=>0,
-            'path'=>$path,
+            'path'=>$oldpath,
             'filename'=>$oldname,
         );
-        $result3=$db->find($condition);
-        if (empty($result3['is_dir'])||$result3['is_dir']==0) {
-            $db->update(
-               $condition3,
-               array(
-                    'filename'=>$newname,
-                )
-            );
-        } else {
-            if (!namaIllegal($newname)) {
-                ERR::Catcher(1004);
-            }
-            //找到修改的文件的子文件
-            $oldpath=$path."/".$oldname;
-            $condition2=array(
-            "uid=:uid and deleted=0 and path like :path",
-            ":path"=>$oldpath.'%',
-            ':uid'=>$_SESSION['uid'],
-            );
-            $result2=$db->find($condition2);
-            if (empty($result2)) {
-                $db->update(
-                    $condition3,
-                    array(
-                        'path'=>$path,
-                    )
-                );
-            } else {
-                    $db->query('update diskfile set path =replace(path,:oldpath,:newpath) where uid=:uid and deleted=0',
-                array(
-                    ':oldpath'=>$oldpath,
-                    ':newpath'=>$newpath,
-                    ':uid'=>$_SESSION['uid'],
-                ));
-            }
+        $result=$db->find($condition);
+        if (empty($result)) {
+            ERR::Catcher(6003);
+        }
+        $db->update(
+           $condition,
+           array(
+                'path'=>$newpath,
+                'filename'=>$newname,
+            )
+        );
+        if ($result['is_dir']==1) {
+            $db->query('update disk_file set path =replace(path,:oldpath,:newpath) where uid=:uid and deleted=0 and path like :pathp', array(
+                ':oldpath'=>$oldpath.$oldname.'/',
+                ':newpath'=>$newpath.$newname.'/',
+                ':uid'=>$_SESSION['uid'],
+                ':pathp'=>$oldpath.'%',
+            ));
         }
         SUCCESS::Catcher('success', true);
     }
 
-    //移动
-    public function actionMove(){
+    public function actionSearch()
+    {
         if (!$this->islogin) ERR::Catcher(2001);
-        if ((!arg('oldpath'))||(!arg('newpath'))||(!arg('filename'))) ERR::Catcher(2003);
-        if ((!self::is_path_legal(arg('oldpath')))||(!self::is_path_legal(arg('newpath')))) ERR::Catcher(1004);
-        if ((!self::is_path_existed(arg('oldpath')))||(!self::is_path_existed(arg('newpath')))) ERR::Catcher(6002);
-        $oldpath=arg('oldpath');
-        $newpath=arg('newpath');
-        $filename=arg('filename');
-        //重名
-        $db=new Model('disk_file');
-        $condition=array(
-            'uid'=>$_SESSION['uid'],
-            'deleted'=>0,
-            'path'=>$newpath,
-            'filename'=>$filename,
-        );
-        $result=$db->find($condition);
-        if(!empty($result)){
-            ERR::Catcher(6004);
-        }
-        //所移动目标是否为文件夹
-        $condition2=array(
-            'uid'=>$_SESSION['uid'],
-            'deleted'=>0,
-            'path'=>$oldpath,
-            'filename'=>$filename,
-        );
-        $result2=$db->find($condition2);
-        //若是文件
-        if (empty($result3['is_dir'])||$result3['is_dir']==0) {
-            $db->update(
-                $condition2,
-                array(
-                    'path'=>$newpath,
-                ));
-            SUCCESS::Catcher('success', true);
-        }
-        //若是文件夹
-        //判断文件夹内是否为空
-        //若空
-        $path2=$oldpath.'/'.$filename;
-        $condition3=array(
-            'uid'=>$_SESSION['uid'],
-            'deleted'=>0,
-            'path'=>$path2,
-        );
-        $result3=$db->find($condition3);
-        if (empty($result3)) {
-            $db->update(
-                $condition2,
-                array(
-                    'path'=>$newpath,
-                ));
-            SUCCESS::Catcher('success', true);
-        }        
-        //若不为空
-        else{
-            $db->query(
-            'update diskfile set path =replace(path,:oldpath,:newpath) where uid=:uid and deleted=0',
-            array(
-                ':oldpath'=>$oldpath,
-                ':newpath'=>$newpath,
-                ':uid'=>$_SESSION['uid'],
-            ));
-            SUCCESS::Catcher('success', true);
-        }
-    }
-
-    //用到的函数
-
-    private function getSHA($path)
-    {
-        $fp = fopen($path, 'rb');
-        $ctx = hash_init('sha1');
-        hash_update($ctx, filesize($path)."\0");
-        while (!feof($fp)) {
-            hash_update($ctx, fread($fp, 65536));
-        }
-        return hash_final($ctx);
-    }
-
-    //文件路径是否正确
-    private function is_path_legal($path)
-    {
-        $pattern='/[\\\\:*?"<>|]|\/\.\/|\/\.\.\//';
-        if(preg_match($pattern, $path)) return false;
-        if ($path[0] != '/') return false;
-        return true;
-    }
-
-    //路径是否存在（传入参数的目录）
-    private function is_path_existed($path)
-    {
-        if($path[-1]!='/') $path=self::getName($path)[1];//获取文件所在文件夹
-        if($path=='/') return true;
-        $name=self::getName($path);
-        $filename=$name[0];
-        $path=$name[1];
+        if (!arg('keyword')) ERR::Catcher(1003);
         $db=new Model("disk_file");
-        $condition=array('uid'=>$_SESSION['uid'],'path'=>$path,'filename'=>$filename,'is_dir'=>1);
-        $result=$db->find($condition);
-        if($result==false) return false;
-        return true;
-    }
-
-    private function getName($path)
-    {
-        //是否以/结尾
-
-        if($path[-1]=='/')
-        {
-            $name=array();
-            if($path=='/')
-            {
-                $name[0]='';
-                $name[1]='/';
-                return $name;
-            }
-
-            $result=explode('/',$path);
-            $name[0]=$result[count($result)-2];
-            $name[1]=substr($path,0,strlen($path)-strlen($name[0])-1);
-            return $name;
-        }
-        else
-        {
-
-            $name=array();
-            $result=explode('/',$path);
-            $name[0]=$result[count($result)-1];
-            $name[1]=substr($path,0,strlen($path)-strlen($name[0])-1)."/";
-            return $name;
-        }
-    }
-    
-    //检验文件名称非法
-    private function nameIllegal($name){
-        $pattern="/<|>|\?|\*|\/|\|/";
-        if(preg_match($pattern,$name)) return true;
-        return false;
+        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir,path from disk_file where uid=:uid and filename like :filename and deleted=0',array(':uid'=>$_SESSION['uid'],':filename'=>'%'.arg('keyword').'%')));
     }
 
     public function actionViewShare() //查看分享
@@ -598,7 +457,74 @@ class CloudController extends BaseController
         }
     }
 
-    function str_rand($length = 32, $char = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+    //用到的函数
+
+    private function getSHA($path)
+    {
+        $fp = fopen($path, 'rb');
+        $ctx = hash_init('sha1');
+        hash_update($ctx, filesize($path)."\0");
+        while (!feof($fp)) {
+            hash_update($ctx, fread($fp, 65536));
+        }
+        return hash_final($ctx);
+    }
+
+    //文件路径是否正确
+    private function is_path_legal($path)
+    {
+        $pattern='/[\\\\:*?"<>|]|\/\.\/|\/\.\.\//';
+        if(preg_match($pattern, $path)) return false;
+        if ($path[0] != '/') return false;
+        return true;
+    }
+
+    //路径是否存在（传入参数的目录）
+    private function is_path_existed($path)
+    {
+        if($path[-1]!='/') $path=self::getName($path)[1];//获取文件所在文件夹
+        if($path=='/') return true;
+        $name=self::getName($path);
+        $filename=$name[0];
+        $path=$name[1];
+        $db=new Model("disk_file");
+        $condition=array('uid'=>$_SESSION['uid'],'path'=>$path,'filename'=>$filename,'is_dir'=>1);
+        $result=$db->find($condition);
+        if($result==false) return false;
+        return true;
+    }
+
+    private function getName($path)
+    {
+        //是否以/结尾
+
+        if($path[-1]=='/')
+        {
+            $name=array();
+            if($path=='/')
+            {
+                $name[0]='';
+                $name[1]='/';
+                return $name;
+            }
+
+            $result=explode('/',$path);
+            $name[0]=$result[count($result)-2];
+            $name[1]=substr($path,0,strlen($path)-strlen($name[0])-1);
+            return $name;
+        }
+        else
+        {
+
+            $name=array();
+            $result=explode('/',$path);
+            $name[0]=$result[count($result)-1];
+            $name[1]=substr($path,0,strlen($path)-strlen($name[0])-1)."/";
+            return $name;
+        }
+    }
+
+    private function str_rand($length = 8, $char = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ') {
         if(!is_int($length) || $length < 0) {
             return false;
         }

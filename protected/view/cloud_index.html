@@ -133,7 +133,18 @@
                 </button>
             </div>
             <div class="modal-body">
-                <button class="btn nf overflow-hidden" id="selectFile"><div class="position-absolute h-100"></div><i class="MDI file-outline lead align-middle"></i><span class="d-none d-sm-inline"> 继续上传文件</span></button>
+                <div class="row mx-0 align-items-center">
+                    <button class="btn nf overflow-hidden" id="selectFile">
+                        <div class="position-absolute h-100"></div>
+                        <i class="MDI file-outline lead align-middle"></i><span class="d-none d-sm-inline"> 继续上传文件</span>
+                    </button>
+                    <div class="col">
+                        已用空间：<span id="spaceDesc"></span>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="0" id="spacePB"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -170,9 +181,9 @@
     // Uploader
     function Uploader(path, file) {
         var hash, ready, progress, success, fail, done;
-        function successed(arg) {
+        function successed(arg1, arg2) {
             if (done) setTimeout(done, 0);
-            if (success) success(arg);
+            if (success) success(arg1, arg2);
         }
         function failed(arg) {
             if (done) setTimeout(done, 0);
@@ -192,7 +203,7 @@
             progress = callback;
             return this;
         }
-        // param: is fast-transmission
+        // param: is fast-transmission, space
         this.onsuccess = function(callback) {
             success = callback;
             return this;
@@ -216,7 +227,7 @@
                     if (data.data) {
                         $.post("/cloud/hashupload", {hash: hash, path: path}, function(data) {
                             data = JSON.parse(data);
-                            if (data.ret == 200) successed(true);
+                            if (data.ret == 200) successed(true, data.data);
                             else failed(data.desc);
                         }).fail(reqFail);
                     } else {
@@ -243,7 +254,7 @@
                             success: function(data) {
                                 data = JSON.parse(data);
                                 if (data.ret == 200) {
-                                    successed(false);
+                                    successed(false, data.data);
                                 } else {
                                     failed(data.desc)
                                 }
@@ -276,14 +287,14 @@
             icon: 'download',
             desc: '下载',
             action: function(ev) {
-                window.open('download?path=' + escape(getPath(ev)));
+                window.open('download?path=' + encodeURI(getPath(ev)));
             }
         },
         preview: {
             icon: 'eye',
             desc: '预览',
             action: function(ev) {
-                window.open('preview?path=' + escape(getPath(ev)));
+                window.open('preview?path=' + encodeURI(getPath(ev)));
             }
         },
         rename: {
@@ -303,7 +314,14 @@
                         alert("文件名非法！");
                         return;
                     }
-                    console.log(newName);
+                    $.post("rename", {oldname: currentPath + name, newname: currentPath + newName}, function(data) {
+                        data = JSON.parse(data);
+                        if (data.ret == 200) {
+                            loadFileList();
+                        } else {
+                            alert(data.desc);
+                        }
+                    }).fail(networkErr);
                 }, name, pos == -1 ? true : [0, pos]);
             }
         },
@@ -335,6 +353,7 @@
                             data = JSON.parse(data);
                             if (data.ret == 200) {
                                 loadFileList();
+                                setSpace(data.data);
                             } else {
                                 alert(data.desc);
                             }
@@ -357,7 +376,10 @@
         e.preventDefault();
     }
     onsearch = function(e) {
-        console.log($("input[name=q]").blur().val());
+        $.post("search", {keyword: $("input[name=q]").blur().val()}, function(data) {
+            data = JSON.parse(data);
+            setFileList(data.data);
+        }).fail(networkErr);
     }
     // Location
     function availableHash(hash) {
@@ -379,6 +401,7 @@
             ignoreHashChange = true;
             return;
         }
+        $(".modal").modal("hide");
         if (location.hash == "#trash") {
             buttonPress("trashBtn", true);
             buttonPress("shareBtn", false);
@@ -523,13 +546,18 @@
                 btn.path = (f.path || currentPath) + f.filename + (f.is_dir != 0 ? '/' : '');
                 btn.innerHTML = `<i class="MDI ${operations[op].icon}"></i> ${operations[op].desc}`;
                 if (op == 'preview') btn.disabled = supportedExts.indexOf(f.filename.substr(f.filename.lastIndexOf('.'))) == -1;
+                if (op == 'share') btn.disabled = true; // awsl
+                if (op == 'move') btn.disabled = true; // TODO
                 cell.appendChild(btn);
             }
         }
         showColumn(key);
     }
+    var loadingFileList = false;
     function loadFileList(path) {
         if (typeof path != "string") path = currentPath;
+        if (loadFileList && path == currentFileList) return;
+        loadingFileList = true;
         var query;
         if (path[0] == "/") query = $.post("show", {path: path});
         else if (path == "share") ; // TODO
@@ -538,6 +566,7 @@
             data = JSON.parse(data);
             if (data.ret == 200) {
                 setFileList(data.data);
+                loadingFileList = false;
             } else {
                 alert(data.desc);
             }
@@ -606,6 +635,12 @@
             else input.select();
         }
     }
+    var availableSpace = 0;
+    function setSpace(param) {
+        $("#spaceDesc").text(bytesToString(param.used) + "/" + bytesToString(param.total));
+        $("#spacePB").attr("aria-valuenow", param.used).attr("aria-valuemax", param.total).css("width", 100 * param.used / param.total + "%");
+        availableSpace = parseInt(param.available);
+    }
     // param: 'name' | 'size' | 'time'
     function showColumn(name) {
         if (name == 'name') {
@@ -640,7 +675,14 @@
         return size.toFixed(1) + ['B', 'KB', 'MB', 'GB', 'TB'][level];
     }
     // Init
+    var uploaders = [];
+    var currentWorkers = 0;
+    const maxWorkers = 5;
     document.body.onload = function() {
+        $.post("cloudSpace", {}, function(data) {
+            data = JSON.parse(data);
+            setSpace(data.data);
+        });
         $("#order").click(function (ev) {
             sortOrder($("#orderIcon").hasClass("sort-ascending") ? "descending" : "ascending");
         });
@@ -681,7 +723,7 @@
                     fele.appendChild(document.createTextNode(" "));
                     var badge = document.createElement("span");
                     badge.classList = "badge badge-secondary";
-                    badge.innerText = "准备中";
+                    badge.innerText = "等待中";
                     fele.appendChild(badge);
                     fele.appendChild(document.createElement("br"));
                     ele = document.createElement("a");
@@ -713,27 +755,45 @@
                     if (left) left = parseInt(left) + 1;
                     else left = 1;
                     $uplds.text(left);
-                    new Uploader(currentPath + f.name, f).onready(function(hash) {
+                    var uploadPath = currentPath;
+                    var worker = new Uploader(currentPath + f.name, f).onready(function(hash) {
                         badge.classList = "badge badge-info";
                         badge.innerText = "上传中";
                     }).onprogress(function(ev) {
                         current.innerText = bytesToString(ev.loaded);
                         progress.style.width = ev.loaded * 100 / ev.total + "%";
                         progress.setAttribute("aria-valuenow", ev.loaded);
-                    }).onsuccess(function(fast) {
+                    }).onsuccess(function(fast, space) {
                         badge.classList = "badge badge-success";
                         badge.innerText = (fast ? "秒" : "上") + "传成功";
                         current.innerText = bytesToString(f.size);
                         progress.style.width = "100%";
                         progress.setAttribute("aria-valuenow", f.size);
+                        setSpace(space);
                     }).onfail(function(reason) {
                         badge.classList = "badge badge-danger";
                         badge.innerText = reason;
                     }).ondone(function() {
                         var left = parseInt($uplds.text()) - 1;
                         $uplds.text(left ? left : "");
-                        loadFileList();
-                    }).start();
+                        if (currentPath == uploadPath) loadFileList();
+                        if (uploaders.length) {
+                            uploaders.shift().start();
+                        } else {
+                            currentWorkers--;
+                        }
+                    });
+                    var t = worker.start;
+                    worker.start = function() {
+                        badge.innerText = "准备中";
+                        t();
+                    }
+                    if (currentWorkers < maxWorkers) {
+                        currentWorkers++;
+                        worker.start();
+                    } else {
+                        uploaders.push(worker);
+                    }
                 })(f);
             }
             files.value = "";
