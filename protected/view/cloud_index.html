@@ -401,8 +401,32 @@
             icon: 'undo',
             desc: '恢复文件',
             action: function(ev) {
-                var path = getPath(ev);
-                console.log(path);
+                $.post("recover", {fid: getPath(ev)}, function(data) {
+                    data = JSON.parse(data);
+                    if (data.ret == 200) {
+                        loadFileList();
+                    } else {
+                        alert(data.desc);
+                    }
+                }).fail(networkErr);
+            }
+        },
+        deleteForever: {
+            icon: 'delete-forever',
+            desc: '彻底删除',
+            action: function(ev) {
+                confirm('是否彻底删除文件？', '确认删除', function(result) {
+                    if (result) {
+                        $.post("deleteForever", {fid: getPath(ev)}, function(data) {
+                            data = JSON.parse(data);
+                            if (data.ret == 200) {
+                                loadFileList();
+                            } else {
+                                alert(data.desc);
+                            }
+                        }).fail(networkErr);
+                    }
+                }, "btn-danger active");
             }
         }
     };
@@ -570,7 +594,7 @@
             row.id = "op" + i;
             row.dataset.parent = "table";
             var ops = [];
-            if (currentPath == 'trash') ops = ['recover'];
+            if (currentPath == 'trash') ops = ['recover', 'deleteForever'];
             else if (currentPath == 'share') ops = []; // TODO
             else {
                 if (f.is_dir == 0) ops = ['download', 'preview'];
@@ -582,7 +606,7 @@
                 var btn = document.createElement("button");
                 btn.classList = "btn m-0";
                 btn.addEventListener("click", operations[op].action);
-                btn.path = (f.path || currentPath) + f.filename + (f.is_dir != 0 ? '/' : '');
+                btn.path = f.fid || (f.path || currentPath) + f.filename + (f.is_dir != 0 ? '/' : '');
                 btn.innerHTML = `<i class="MDI ${operations[op].icon}"></i> ${operations[op].desc}`;
                 if (op == 'preview') btn.disabled = supportedExts.indexOf(f.filename.substr(f.filename.lastIndexOf('.'))) == -1;
                 if (op == 'share') btn.disabled = true; // awsl

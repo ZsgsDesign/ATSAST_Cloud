@@ -51,7 +51,7 @@ class CloudController extends BaseController
     {
         if (!$this->islogin) ERR::Catcher(2001);
         $db=new Model("disk_file");
-        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir,path from disk_file where uid=:uid and deleted=-1',array(':uid'=>$_SESSION['uid'])));
+        SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir,path,fid from disk_file where uid=:uid and deleted=-1',array(':uid'=>$_SESSION['uid'])));
     }
 
     //删除文件及文件夹
@@ -110,6 +110,39 @@ class CloudController extends BaseController
         $result = $db->find(['uid=:uid', ':uid'=>$_SESSION['uid']]);
         SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
 
+    }
+
+    public function actionRecover()
+    {
+        if (!$this->islogin) ERR::Catcher(2001);
+        if (!arg('fid')) ERR::Catcher(1003);
+        $db = new Model("disk_file");
+        $result = $db->find(['uid'=>$_SESSION['uid'], 'deleted'=>-1, 'fid'=>arg('fid')]);
+        if (!$result) ERR::Catcher(6003);
+        if (!self::is_path_existed($result['path'])) ERR::Catcher(6002);
+        if ($db->find(['uid'=>$_SESSION['uid'], 'deleted'=>0, 'path'=>$result['path'], 'filename'=>$result['filename']])) ERR::Catcher(6004);
+        $sum = $result['filesize'];
+        $db->update(['fid'=>arg('fid')], ['deleted'=>0]);
+        $cond = ['uid'=>$_SESSION['uid'], 'deleted'=>arg('fid')];
+        $result = $db->findAll($cond);
+        for ($i = 0; $i < count($result); ++$i) $sum += $result[$i]['filesize'];
+        $db->update($cond, ['deleted'=>0]);
+        $db = new Model("users");
+        $db->execute('update users set used=used+:addv where uid=:uid', [':addv'=>$sum, ':uid'=>$_SESSION['uid']]);
+        $result = $db->find(['uid'=>$_SESSION['uid']]);
+        SUCCESS::Catcher('success', ['total'=>intval($result['capacity']), 'used'=>intval($result['used']), 'available'=>$result['capacity']-$result['used']]);
+    }
+
+    public function actionDeleteForever()
+    {
+        if (!$this->islogin) ERR::Catcher(2001);
+        if (!arg('fid')) ERR::Catcher(1003);
+        $db = new Model("disk_file");
+        $result = $db->find(['uid'=>$_SESSION['uid'], 'deleted'=>-1, 'fid'=>arg('fid')]);
+        if (!$result) ERR::Catcher(6003);
+        $db->delete(['fid'=>arg('fid')]);
+        $db->delete(['deleted'=>arg('fid')]);
+        SUCCESS::Catcher('success', TRUE);
     }
 
     //新建文件夹
@@ -503,7 +536,7 @@ class CloudController extends BaseController
         $filename=$name[0];
         $path=$name[1];
         $db=new Model("disk_file");
-        $condition=array('uid'=>$_SESSION['uid'],'path'=>$path,'filename'=>$filename,'is_dir'=>1);
+        $condition=array('uid'=>$_SESSION['uid'],'path'=>$path,'filename'=>$filename,'is_dir'=>1,'deleted'=>0);
         $result=$db->find($condition);
         if($result==false) return false;
         return true;
