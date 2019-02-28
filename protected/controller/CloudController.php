@@ -35,6 +35,17 @@ class CloudController extends BaseController
         SUCCESS::Catcher('success',$db->query('select filename,time,filesize,is_dir from disk_file where uid=:uid and path=:path and deleted=0',array(':uid'=>$_SESSION['uid'],':path'=>$path)));
     }
 
+    public function actionShowdir()
+    {
+        if (!$this->islogin) ERR::Catcher(2001);
+        if (!arg('path')) ERR::Catcher(1003);
+        if(!self::is_path_legal(arg('path'))) ERR::Catcher(1004);
+        if(!self::is_path_existed(arg('path'))) ERR::Catcher(6002);
+        $path=arg('path');
+        $db=new Model("disk_file");
+        SUCCESS::Catcher('success',$db->query('select filename from disk_file where uid=:uid and path=:path and deleted=0 and is_dir=1',array(':uid'=>$_SESSION['uid'],':path'=>$path)));
+    }
+
     //回收站
     public function actionRecycle()
     {
@@ -330,9 +341,12 @@ class CloudController extends BaseController
         $newpath = $newname[1];
         $newname = $newname[0];
         if (!self::is_path_existed($newpath)) ERR::Catcher(6002);
+        if (arg("oldname") == '/') ERR::Catcer(1004);
         $oldname = self::getName(arg("oldname"));
         $oldpath = $oldname[1];
         $oldname = $oldname[0];
+
+        if (arg("oldname")[-1] == '/' && substr(arg("newname"), 0, strlen(arg("oldname"))) === arg("oldname")) ERR::Catcher(1004);
 
         //重名
         $db=new Model('disk_file');

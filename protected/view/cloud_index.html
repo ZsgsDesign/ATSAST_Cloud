@@ -33,7 +33,7 @@
     }
 </style>
 <div class="container">
-    <nav aria-label="breadcrumb" class="mt-3">
+    <nav aria-label="breadcrumb" class="mt-3" id="mainNav">
         <ol class="breadcrumb align-items-center p-2">
             <li><button type="button" class="btn btn-lg btn-dark px-2 py-1 mb-0" data-toggle="button" id="trashBtn"><i class="MDI delete-empty"></i></button></li>
             <li><button type="button" class="btn btn-lg btn-dark px-2 py-1 mb-0" data-toggle="button" id="shareBtn" disabled><i class="MDI share-variant"></i></button></li>
@@ -119,6 +119,30 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" id="prompt_confirm">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="browse" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="prompt_title">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="browse_title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <nav aria-label="breadcrumb" class="mt-3" id="browseNav">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item active" aria-current="page">根目录</li>
+                    </ol>
+                </nav>
+                <div class="list-group" id="dirlist"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="browse_confirm">确定</button>
             </div>
         </div>
     </div>
@@ -338,7 +362,18 @@
             desc: '移动',
             action: function(ev) {
                 var path = getPath(ev);
-                console.log(path);
+                var pos = path.lastIndexOf('/', path.length - (path.endsWith('/') ? 2 : 0));
+                selectDir(function(target) {
+                    if (!target || target == path.substr(0, pos + 1)) return;
+                    $.post("rename", {oldname: path, newname: target + path.substr(pos + 1)}, function(data) {
+                        data = JSON.parse(data);
+                        if (data.ret == 200) {
+                            loadFileList();
+                        } else {
+                            alert(data.desc);
+                        }
+                    }).fail(networkErr);
+                }, "移动至", path.substr(0, pos + 1), path.endsWith('/') ? path : undefined);
             }
         },
         delete: {
@@ -425,9 +460,12 @@
         loadFileList(location.hash.substr(1));
     }
     var currentPath = "/", tmpPath = "/";
-    function setNavbar(path) {
+    function setNavbar(path, $navbar, hrefFunc) {
+        if (!$navbar) $navbar = $("#mainNav");
+        if (!hrefFunc) hrefFunc = function(path) {
+            return '#' + path;
+        }
         var list, prefix = "";
-        currentPath = path;
         if (path == "trash") list = ["回收站"];
         else if (path == "share") list = ["分享"];
         else {
@@ -435,8 +473,8 @@
             tmpPath = path;
             $("#trash").attr("aria-pressed", "false").removeClass("active");
         }
-        $(".breadcrumb-item").remove();
-        var navbar = $(".breadcrumb")[0];
+        $navbar.find(".breadcrumb-item").remove();
+        var navbar = $navbar.find(".breadcrumb")[0];
         for (var i = 0; i < list.length; ++i) {
             var ele = document.createElement("li");
             ele.classList = "breadcrumb-item";
@@ -446,8 +484,8 @@
                 ele.innerText = list[i];
             } else {
                 if (prefix) prefix += list[i] + "/";
-                else prefix = "#/";
-                ele.innerHTML = `<a href="${prefix}">${list[i]}</a>`;
+                else prefix = "/";
+                ele.innerHTML = `<a href="${hrefFunc(prefix)}">${list[i]}</a>`;
             }
             navbar.appendChild(ele);
         }
@@ -547,17 +585,21 @@
                 btn.innerHTML = `<i class="MDI ${operations[op].icon}"></i> ${operations[op].desc}`;
                 if (op == 'preview') btn.disabled = supportedExts.indexOf(f.filename.substr(f.filename.lastIndexOf('.'))) == -1;
                 if (op == 'share') btn.disabled = true; // awsl
-                if (op == 'move') btn.disabled = true; // TODO
                 cell.appendChild(btn);
             }
+        }
+        if (list.length == 0) {
+            body.innerHTML = '<tr><td><h6 style="color: gray;" class="text-center m-0">文件夹为空</h6></td></tr>';
         }
         showColumn(key);
     }
     var loadingFileList = false;
     function loadFileList(path) {
         if (typeof path != "string") path = currentPath;
+        else currentPath = path;
         if (loadFileList && path == currentFileList) return;
         loadingFileList = true;
+        clearFileList();
         var query;
         if (path[0] == "/") query = $.post("show", {path: path});
         else if (path == "share") ; // TODO
@@ -634,6 +676,44 @@
             if (typeof selected == "object") input.setSelectionRange(selected[0], selected[1]);
             else input.select();
         }
+    }
+    var selectingDir = '/', exceptDir;
+    function selectDir(callback, title, defaultDir, exceptDir) {
+        if (!title) title = "选择文件夹";
+        if (!defaultDir) defaultDir = '/';
+        if (!exceptDir) exceptDir = '_'
+        $("#browse_title").html(title);
+        $(".modal[id!=browse]").modal("hide");
+        $("#browse").modal()[0].callback = callback;
+        window.exceptDir = exceptDir;
+        updateSelectingDir(defaultDir);
+    }
+    function updateSelectingDir(dir) {
+        selectingDir = dir;
+        $("#dirlist .list-group-item").remove();
+        setNavbar(dir, $("#browseNav"), function(path) {
+            return `javascript:updateSelectingDir('${path}');`;
+        });
+        $.post("showdir", {path: dir}, function(data) {
+            data = JSON.parse(data);
+            if (data.ret == 200) {
+                var group = $("#dirlist")[0];
+                for (var cdir of data.data) {
+                    var ele = document.createElement("a");
+                    ele.href = `javascript:updateSelectingDir("${dir + cdir.filename}/");`;
+                    ele.classList = "list-group-item list-group-item-action";
+                    if ((dir + cdir.filename + '/').startsWith(exceptDir)) {
+                        ele.href = "javascript:void(0);";
+                        ele.classList.add("disabled");
+                    }
+                    ele.innerText = cdir.filename;
+                    group.appendChild(ele);
+                }
+                if (data.data.length == 0) $("#dirlist").html('<a href="javascript:void(0);" class="list-group-item list-group-item-action disabled">空</a>');
+            } else {
+                alert(data.desc);
+            }
+        }).fail(networkErr);
     }
     var availableSpace = 0;
     function setSpace(param) {
@@ -845,7 +925,7 @@
                 prompt.callback(false);
                 prompt.callback = undefined;
             }
-        })
+        });
         $("#prompt_confirm").click(function(ev) {
             var prompt = $("#prompt")[0];
             if (prompt.callback) {
@@ -868,6 +948,21 @@
                 prompt.callback = undefined;
             }
         });
+        $("#browse_confirm").click(function(ev) {
+            var browse = $("#browse")[0];
+            if (browse.callback) {
+                browse.callback(selectingDir);
+                browse.callback = undefined;
+                $("#browse").modal("hide");
+            }
+        });
+        $("#browse").on("hide.bs.modal", function(ev) {
+            var browse = $("#browse")[0];
+            if (browse.callback) {
+                browse.callback(undefined);
+                browse.callback = undefined;
+            }
+        })
         $(".modal").click(function (ev) {
             ev.stopPropagation();
         });
