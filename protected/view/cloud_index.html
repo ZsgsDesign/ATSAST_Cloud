@@ -411,15 +411,13 @@
         e.preventDefault();
     }
     onsearch = function(e) {
-        $.post("search", {keyword: $("input[name=q]").blur().val()}, function(data) {
-            data = JSON.parse(data);
-            setFileList(data.data);
-        }).fail(networkErr);
+        location.hash = '?' + $("input[name=q]").blur().val();
     }
     // Location
     function availableHash(hash) {
         if (hash == "#trash") return true;
         if (hash == "#share") return true;
+        if (hash.startsWith("#?")) return true;
         if (!hash.startsWith('#/')) return false;
         if (!hash.endsWith('/')) return false;
         if (hash.match(/[\\:*?"<>|]|\/\.\/|\/\.\.\//)) return false;
@@ -449,6 +447,8 @@
             $(".nf").attr("disabled", "");
             $("#files").addClass("d-none");
             document.title = "分享 - SAST Cloud";
+        } else if (location.hash.startsWith("#?")) {
+            document.title = "搜索 - SAST Cloud";
         } else {
             buttonPress("trashBtn", false);
             buttonPress("shareBtn", false);
@@ -468,6 +468,7 @@
         var list, prefix = "";
         if (path == "trash") list = ["回收站"];
         else if (path == "share") list = ["分享"];
+        else if (path[0] == "?") list = ["根目录", "搜索"];
         else {
             list = ("根目录" + path.substr(0, path.length - 1)).split('/');
             tmpPath = path;
@@ -604,6 +605,7 @@
         if (path[0] == "/") query = $.post("show", {path: path});
         else if (path == "share") ; // TODO
         else if (path == "trash") query = $.post("recycle", {});
+        else if (path[0] == '?') query = $.post("search", {keyword: path.substr(1)});
         if (query) query.done(function(data) {
             data = JSON.parse(data);
             if (data.ret == 200) {

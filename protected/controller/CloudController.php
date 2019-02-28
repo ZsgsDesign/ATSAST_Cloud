@@ -123,6 +123,7 @@ class CloudController extends BaseController
         $path=$name[1];
         if(!self::is_path_existed($path)) ERR::Catcher(6002);
         $db=new Model("disk_file");
+        if ($db->find(['uid'=>$_SESSION['uid'], 'filename'=>$filename, 'path'=>$path])) ERR::Catcher(6004);
         $newrow=array(
             "uid"       =>$_SESSION['uid'],
             "filename"  =>$filename,
